@@ -797,6 +797,12 @@
     // --- スマホでの保存に対応した画像書き出し処理 ---
     // ファイル名は getFileName() に統一し、JSON書き出しと同じ「カード名.png」で保存されるようにする。
     // これにより端末やブラウザによって保存ファイル名がバラバラになる問題（表記ゆれ）を解消する。
+    function isMobileDevice() {
+      if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+        return navigator.userAgentData.mobile;
+      }
+      return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
     function showImageSaveOverlay(imgUrl, fileName) {
       const overlay = document.createElement('div');
       overlay.style.position = 'fixed';
@@ -812,7 +818,7 @@
       overlay.style.boxSizing = 'border-box';
 
       const msg = document.createElement('div');
-      msg.innerHTML = '【スマホ】画像を<b>長押し</b>して保存（写真に追加）<br>【PC/一部ブラウザ】下のボタンから保存';
+      msg.innerHTML = '画像を<b>長押し</b>して保存（写真に追加）<br>うまく保存できない場合は下のボタンをタップ';
       msg.style.color = '#fff';
       msg.style.textAlign = 'center';
       msg.style.marginBottom = '15px';
@@ -884,8 +890,22 @@
           }
 
           const file = new File([blob], fileName, { type: 'image/png' });
+          const mobile = isMobileDevice();
 
-          // Web Share API（主にスマホ）に対応していれば、共有シート経由で
+          // PC：ダイアログを挟まず、ブラウザの通常のダウンロード動作でそのまま保存する。
+          if (!mobile) {
+            const imgUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = imgUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(imgUrl);
+            return;
+          }
+
+          // スマホ：Web Share API（共有シート）に対応していれば、
           // ファイル名を保ったまま「写真に保存」等ができるようにする。
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
@@ -897,6 +917,7 @@
             }
           }
 
+          // 共有シート非対応のスマホ向けフォールバック（長押し保存の案内）
           const imgUrl = URL.createObjectURL(blob);
           showImageSaveOverlay(imgUrl, fileName);
         }, 'image/png');
