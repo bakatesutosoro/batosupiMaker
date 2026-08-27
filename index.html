@@ -217,7 +217,7 @@
     .tag-flash { display: inline-block; background: #7b1fa2; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-bottom: 2px; }
     .tag-oc { display: inline-block; background: #d32f2f; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 4px; border-radius: 2px; margin-right: 3px; }
 
-    .symbol-box { position: absolute; bottom: 8px; right: 8px; z-index: 10; display: flex; gap: 4px; }
+    .symbol-box { position: absolute; bottom: 8px; right: 8px; z-index: 10; display: flex; flex-wrap: wrap-reverse; justify-content: flex-end; gap: 4px; max-width: 120px; }
   </style>
 </head>
 <body>
@@ -280,6 +280,7 @@
     <div class="flex-row">
       <div class="form-group flex-col"><label>コスト</label><input type="number" id="in-cost" value="3"></div>
       <div class="form-group flex-col"><label>軽減数</label><input type="number" id="in-reduct" value="1" max="10"></div>
+      <div class="form-group flex-col"><label>シンボル数</label><input type="number" id="in-symbol-num" value="1" min="0" max="5"></div>
     </div>
 
     <div class="form-group"><label>カード名</label><input type="text" id="in-name" value="赤の世界"></div>
@@ -687,7 +688,12 @@
       }
 
       const symBox = document.getElementById('out-symbol');
-      symBox.innerHTML = createSymbolSvg(theme.symbol);
+      symBox.innerHTML = '';
+      const symNumRaw = parseInt(document.getElementById('in-symbol-num').value);
+      const symCount = isNaN(symNumRaw) ? 1 : Math.max(0, symNumRaw);
+      for (let i = 0; i < symCount; i++) {
+        symBox.innerHTML += createSymbolSvg(theme.symbol);
+      }
     }
 
     document.querySelectorAll('.editor input, .editor textarea, .editor select').forEach(elem => {
@@ -789,60 +795,114 @@
     });
 
     // --- スマホでの保存に対応した画像書き出し処理 ---
+    // ファイル名は getFileName() に統一し、JSON書き出しと同じ「カード名.png」で保存されるようにする。
+    // これにより端末やブラウザによって保存ファイル名がバラバラになる問題（表記ゆれ）を解消する。
+    function showImageSaveOverlay(imgUrl, fileName) {
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0'; overlay.style.left = '0';
+      overlay.style.width = '100vw'; overlay.style.height = '100vh';
+      overlay.style.backgroundColor = 'rgba(0,0,0,0.9)';
+      overlay.style.zIndex = '9999';
+      overlay.style.display = 'flex';
+      overlay.style.flexDirection = 'column';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.padding = '20px';
+      overlay.style.boxSizing = 'border-box';
+
+      const msg = document.createElement('div');
+      msg.innerHTML = '【スマホ】画像を<b>長押し</b>して保存（写真に追加）<br>【PC/一部ブラウザ】下のボタンから保存';
+      msg.style.color = '#fff';
+      msg.style.textAlign = 'center';
+      msg.style.marginBottom = '15px';
+      msg.style.lineHeight = '1.5';
+      msg.style.fontWeight = 'bold';
+
+      const img = document.createElement('img');
+      img.src = imgUrl;
+      img.style.maxWidth = '85%';
+      img.style.maxHeight = '60%';
+      img.style.borderRadius = '10px';
+      img.style.boxShadow = '0 5px 15px rgba(255,255,255,0.3)';
+
+      // download属性付きのリンクにすることで、対応ブラウザでは
+      // 保存ファイル名が常に fileName（カード名.png）に統一される。
+      const saveLink = document.createElement('a');
+      saveLink.href = imgUrl;
+      saveLink.download = fileName;
+      saveLink.innerText = `⬇ ${fileName} を保存`;
+      saveLink.style.display = 'block';
+      saveLink.style.marginTop = '18px';
+      saveLink.style.padding = '10px 24px';
+      saveLink.style.fontSize = '15px';
+      saveLink.style.fontWeight = 'bold';
+      saveLink.style.borderRadius = '5px';
+      saveLink.style.background = '#00796b';
+      saveLink.style.color = '#fff';
+      saveLink.style.textDecoration = 'none';
+      saveLink.style.textAlign = 'center';
+
+      const closeBtn = document.createElement('button');
+      closeBtn.innerText = '✖ 閉じる';
+      closeBtn.style.marginTop = '12px';
+      closeBtn.style.padding = '10px 30px';
+      closeBtn.style.fontSize = '16px';
+      closeBtn.style.fontWeight = 'bold';
+      closeBtn.style.border = 'none';
+      closeBtn.style.borderRadius = '5px';
+      closeBtn.style.background = '#d32f2f';
+      closeBtn.style.color = '#fff';
+      closeBtn.style.cursor = 'pointer';
+      closeBtn.onclick = () => {
+        document.body.removeChild(overlay);
+        URL.revokeObjectURL(imgUrl);
+      };
+
+      overlay.appendChild(msg);
+      overlay.appendChild(img);
+      overlay.appendChild(saveLink);
+      overlay.appendChild(closeBtn);
+      document.body.appendChild(overlay);
+    }
+
     document.getElementById('btn-download').addEventListener('click', () => {
       const btn = document.getElementById('btn-download');
+      const originalLabel = btn.innerText;
       btn.innerText = '画像作成中...';
+      btn.disabled = true;
+      const fileName = getFileName() + '.png';
 
       html2canvas(document.getElementById('card-preview'), { scale: 2, useCORS: true }).then(canvas => {
-        btn.innerText = 'カードを画像保存 (PNG)';
-        
-        const imgData = canvas.toDataURL('image/png');
-        
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0'; overlay.style.left = '0';
-        overlay.style.width = '100vw'; overlay.style.height = '100vh';
-        overlay.style.backgroundColor = 'rgba(0,0,0,0.9)';
-        overlay.style.zIndex = '9999';
-        overlay.style.display = 'flex';
-        overlay.style.flexDirection = 'column';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
+        canvas.toBlob(async (blob) => {
+          btn.innerText = originalLabel;
+          btn.disabled = false;
 
-        const msg = document.createElement('div');
-        msg.innerHTML = '【スマホ】画像を<b>長押し</b>して保存（写真に追加）<br>【PC】画像を<b>右クリック</b>して保存';
-        msg.style.color = '#fff';
-        msg.style.textAlign = 'center';
-        msg.style.marginBottom = '15px';
-        msg.style.lineHeight = '1.5';
-        msg.style.fontWeight = 'bold';
+          if (!blob) {
+            alert('画像の生成に失敗しました。');
+            return;
+          }
 
-        const img = document.createElement('img');
-        img.src = imgData;
-        img.style.maxWidth = '85%';
-        img.style.maxHeight = '70%';
-        img.style.borderRadius = '10px';
-        img.style.boxShadow = '0 5px 15px rgba(255,255,255,0.3)';
+          const file = new File([blob], fileName, { type: 'image/png' });
 
-        const closeBtn = document.createElement('button');
-        closeBtn.innerText = '✖ 閉じる';
-        closeBtn.style.marginTop = '20px';
-        closeBtn.style.padding = '10px 30px';
-        closeBtn.style.fontSize = '16px';
-        closeBtn.style.fontWeight = 'bold';
-        closeBtn.style.border = 'none';
-        closeBtn.style.borderRadius = '5px';
-        closeBtn.style.background = '#d32f2f';
-        closeBtn.style.color = '#fff';
-        closeBtn.style.cursor = 'pointer';
-        closeBtn.onclick = () => document.body.removeChild(overlay);
+          // Web Share API（主にスマホ）に対応していれば、共有シート経由で
+          // ファイル名を保ったまま「写真に保存」等ができるようにする。
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({ files: [file], title: fileName });
+              return;
+            } catch (err) {
+              if (err && err.name === 'AbortError') return; // ユーザーがキャンセル
+              // それ以外のエラー時はフォールバックへ進む
+            }
+          }
 
-        overlay.appendChild(msg);
-        overlay.appendChild(img);
-        overlay.appendChild(closeBtn);
-        document.body.appendChild(overlay);
+          const imgUrl = URL.createObjectURL(blob);
+          showImageSaveOverlay(imgUrl, fileName);
+        }, 'image/png');
       }).catch(err => {
-        btn.innerText = 'カードを画像保存 (PNG)';
+        btn.innerText = originalLabel;
+        btn.disabled = false;
         alert('画像の生成に失敗しました。');
       });
     });
