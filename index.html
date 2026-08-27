@@ -122,7 +122,6 @@
     }
     .card-name-wrapper { flex-grow: 1; overflow: hidden; display: flex; align-items: center; min-width: 0; }
     
-    /* カード名：影で細い白フチを作り、潰れないように調整 */
     .card-name {
       font-size: 20px; font-weight: 900; white-space: nowrap; color: #000;
       text-shadow: 
@@ -180,6 +179,18 @@
       text-shadow: 1px 1px 2px #000; overflow-y: auto;
     }
     .effect-section { margin-bottom: 5px; }
+
+    /* <b>タグの文字色を連動させる設定 */
+    .card b {
+      color: var(--b-color, #ef5350);
+    }
+    /* 全色(Rainbow)時のグラデーション設定 */
+    .card.theme-rainbow b {
+      background: linear-gradient(90deg, #ef5350, #ab47bc, #e0e0e0, #ffee58, #66bb6a, #42a5f5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
 
     /* 合体条件バナー */
     .brave-banner {
@@ -278,10 +289,10 @@
       <div class="form-group flex-col" style="flex:2;"><label>系統</label><input type="text" id="in-system" value="起幻"></div>
     </div>
 
-    <!-- 2. 最頻出：通常テキスト / Lv効果 -->
+    <!-- 2. 通常テキスト / Lv効果（2.5倍に拡大：rows=8） -->
     <div class="editor-section">通常テキスト / Lv効果</div>
     <div class="form-group">
-      <textarea id="in-effect" rows="3"><b>Lv1・Lv2</b>
+      <textarea id="in-effect" rows="8"><b>Lv1・Lv2</b>
 自分の赤のスピリットがアタックしたとき、相手のスピリット1体を破壊する。</textarea>
     </div>
 
@@ -440,13 +451,22 @@
     }
 
     function updateCard() {
-      const theme = COLOR_THEMES[document.getElementById('in-color').value];
+      const colorVal = document.getElementById('in-color').value;
+      const theme = COLOR_THEMES[colorVal];
       
       const card = document.getElementById('card-preview');
       card.style.background = theme.grad;
 
+      // <b>タグの文字色を制御する設定
+      if (colorVal === 'rainbow') {
+        card.classList.add('theme-rainbow');
+      } else {
+        card.classList.remove('theme-rainbow');
+        card.style.setProperty('--b-color', theme.main);
+      }
+
       const nameBand = document.getElementById('out-name-band');
-      if (document.getElementById('in-color').value === 'rainbow') {
+      if (colorVal === 'rainbow') {
         nameBand.style.background = 'linear-gradient(90deg, red, yellow, green, blue, magenta)';
       } else {
         nameBand.style.background = `linear-gradient(90deg, ${theme.main} 0%, rgba(20,20,20,0.9) 80%)`;
@@ -455,7 +475,7 @@
       document.getElementById('out-cost').innerText = document.getElementById('in-cost').value;
       
       const costWrapper = document.getElementById('out-cost-wrapper');
-      if (document.getElementById('in-color').value === 'rainbow') {
+      if (colorVal === 'rainbow') {
         costWrapper.style.background = 'linear-gradient(135deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)';
       } else {
         costWrapper.style.background = theme.main;
@@ -486,7 +506,7 @@
       lvBpBox.innerHTML = '';
       let hasLeftContent = false;
 
-      // --- 変更箇所：コアかBPどちらかが入力されていれば表示 ---
+      // コアかBPのどちらかが入力されていれば表示
       ['1', '2', '3'].forEach(num => {
         const core = document.getElementById(`in-lv${num}-core`).value;
         const bp = document.getElementById(`in-lv${num}-bp`).value;
@@ -768,11 +788,62 @@
       event.target.value = '';
     });
 
+    // --- スマホでの保存に対応した画像書き出し処理 ---
     document.getElementById('btn-download').addEventListener('click', () => {
-      html2canvas(document.getElementById('card-preview'), { scale: 2 }).then(canvas => {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = getFileName() + '.png'; a.click();
+      const btn = document.getElementById('btn-download');
+      btn.innerText = '画像作成中...';
+
+      html2canvas(document.getElementById('card-preview'), { scale: 2, useCORS: true }).then(canvas => {
+        btn.innerText = 'カードを画像保存 (PNG)';
+        
+        const imgData = canvas.toDataURL('image/png');
+        
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0'; overlay.style.left = '0';
+        overlay.style.width = '100vw'; overlay.style.height = '100vh';
+        overlay.style.backgroundColor = 'rgba(0,0,0,0.9)';
+        overlay.style.zIndex = '9999';
+        overlay.style.display = 'flex';
+        overlay.style.flexDirection = 'column';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+
+        const msg = document.createElement('div');
+        msg.innerHTML = '【スマホ】画像を<b>長押し</b>して保存（写真に追加）<br>【PC】画像を<b>右クリック</b>して保存';
+        msg.style.color = '#fff';
+        msg.style.textAlign = 'center';
+        msg.style.marginBottom = '15px';
+        msg.style.lineHeight = '1.5';
+        msg.style.fontWeight = 'bold';
+
+        const img = document.createElement('img');
+        img.src = imgData;
+        img.style.maxWidth = '85%';
+        img.style.maxHeight = '70%';
+        img.style.borderRadius = '10px';
+        img.style.boxShadow = '0 5px 15px rgba(255,255,255,0.3)';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = '✖ 閉じる';
+        closeBtn.style.marginTop = '20px';
+        closeBtn.style.padding = '10px 30px';
+        closeBtn.style.fontSize = '16px';
+        closeBtn.style.fontWeight = 'bold';
+        closeBtn.style.border = 'none';
+        closeBtn.style.borderRadius = '5px';
+        closeBtn.style.background = '#d32f2f';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.onclick = () => document.body.removeChild(overlay);
+
+        overlay.appendChild(msg);
+        overlay.appendChild(img);
+        overlay.appendChild(closeBtn);
+        document.body.appendChild(overlay);
+      }).catch(err => {
+        btn.innerText = 'カードを画像保存 (PNG)';
+        alert('画像の生成に失敗しました。');
       });
     });
 
