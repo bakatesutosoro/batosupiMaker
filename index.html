@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>オリジナルカードメーカー</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      background-color: #2c2c2c; color: #fff;
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      margin: 0; padding: 20px; display: flex; gap: 30px; justify-content: center; align-items: center;
+      flex-direction: column; /* スマホ用：上がプレビュー、下がエディター */
+    }
+
+    /* PC表示：左エディター、右プレビュー */
+    @media (min-width: 850px) {
+      body {
+        flex-direction: row-reverse;
+        align-items: flex-start;
+      }
+    }
+
+    /* エディター部分（内部スクロールを廃止し、ページ全体でスクロール） */
+    .editor {
+      background: #1e1e1e; padding: 20px; border-radius: 8px; width: 420px; max-width: 100%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+    }
+    .editor h2 { margin-top: 0; font-size: 18px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+    
+    .editor-section {
+      font-size: 13px; font-weight: bold; color: #00e676; margin: 15px 0 6px 0;
+      border-left: 3px solid #00e676; padding-left: 6px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .editor-section label {
+      cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none; width: 100%;
+    }
+    .editor-section input[type="checkbox"] { width: 16px; height: 16px; accent-color: #00e676; cursor: pointer; }
+
+    .section-body { margin-bottom: 5px; }
+    .editor-note { font-size: 11px; color: #aaa; margin-bottom: 12px; line-height: 1.4; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 12px; margin-bottom: 3px; color: #aaa; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%; box-sizing: border-box; padding: 6px 8px; background: #333;
+      border: 1px solid #555; color: #fff; border-radius: 4px; font-family: inherit;
+    }
+    .flex-row { display: flex; gap: 8px; }
+    .flex-col { flex: 1; }
+
+    /* ボタン類 */
+    .action-btn {
+      display: block; width: 100%; padding: 12px; border: none; border-radius: 4px;
+      font-weight: bold; font-size: 15px; cursor: pointer; text-align: center;
+      box-sizing: border-box; margin-top: 10px; color: #fff; transition: background 0.2s;
+    }
+    #btn-download { background: #d32f2f; margin-top: 20px; }
+    #btn-download:hover { background: #b71c1c; }
+    .btn-export { background: #00796b; }
+    .btn-export:hover { background: #004d40; }
+    .btn-import-label { background: #1976d2; }
+    .btn-import-label:hover { background: #115293; }
+
+    /* カードプレビュー部分 */
+    .card-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* スマホでプレビューが画面からはみ出さないための縮小調整 */
+    @media (max-width: 440px) {
+      .card-wrapper {
+        width: 400px; height: 575px;
+        transform: scale(0.78);
+        transform-origin: top center;
+        margin-bottom: -120px;
+      }
+    }
+
+    .card {
+      width: 400px; height: 575px; background-color: #000; border-radius: 0;
+      position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+      border: none; cursor: pointer; box-sizing: border-box;
+    }
+    .card.drag-over { border: 4px dashed #00e676; opacity: 0.8; }
+    
+    .card-img {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-size: cover; background-position: center; background-repeat: no-repeat; z-index: 1;
+    }
+
+    /* 配置設定 */
+    .cost-box { position: absolute; top: 7px; left: 7px; z-index: 10; }
+    .cost-circle-wrapper {
+      width: 58px; height: 58px; border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+    }
+    .cost-circle {
+      width: 50px; height: 50px; background: #fff; border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 34px; font-weight: 900; color: #000; font-family: Arial, sans-serif;
+    }
+
+    .reduction-box {
+      position: absolute; top: 14px; left: 71px; z-index: 10;
+      display: grid; grid-template-rows: repeat(2, 18px); grid-auto-flow: column; gap: 4px; max-width: 220px;
+    }
+    .reduction-sym { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #fff; box-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+
+    .name-band {
+      position: absolute; top: 295px; left: 0; width: 100%; height: 32px;
+      padding: 0 8px; box-sizing: border-box; z-index: 10; display: flex; align-items: center; gap: 4px;
+      border-top: 1px solid rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.4);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+    }
+    .card-type {
+      flex-shrink: 0; background: rgba(0,0,0,0.6); border: 1px solid #aaa; padding: 2px 6px;
+      font-size: 10px; font-weight: bold; white-space: nowrap; border-radius: 4px;
+    }
+    .card-name-wrapper { flex-grow: 1; overflow: hidden; display: flex; align-items: center; min-width: 0; }
+    
+    /* カード名：影で細い白フチを作り、潰れないように調整 */
+    .card-name {
+      font-size: 20px; font-weight: 900; white-space: nowrap; color: #000;
+      text-shadow: 
+        -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
+        0 -1px 0 #fff, 0 1px 0 #fff, -1px 0 0 #fff, 1px 0 0 #fff,
+        0 2px 4px rgba(0,0,0,0.9);
+    }
+
+    .card-system-wrapper { flex-shrink: 0; max-width: 35%; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; }
+    .card-system { font-size: 11px; font-weight: bold; white-space: nowrap; text-shadow: 1px 1px 2px #000; }
+
+    /* 左下：Lv/BPボックス */
+    .lv-bp-box {
+      position: absolute; top: 335px; left: 8px; width: 72px; z-index: 10;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .lv-item { display: flex; flex-direction: column; gap: 2px; }
+    .lv-item.bordered { margin-top: 2px; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 3px; }
+    .lv-header { display: flex; align-items: center; gap: 4px; }
+    
+    .core-num {
+      background: #2a2a2a; color: #fff; font-size: 12px; font-weight: bold;
+      padding: 0px 5px; border-radius: 3px; font-family: Arial, sans-serif;
+      border: 1px solid #888; box-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    }
+    
+    .lv-label {
+      background: #1e88e5; color: #fff; font-size: 9.5px; font-weight: bold;
+      padding: 1px 4px; border: 1px solid #fff; border-radius: 3px; white-space: nowrap; text-shadow: 1px 1px 2px #000;
+    }
+    .lv-label.lv2 { background: #fbc02d; color: #000; text-shadow: none; }
+    .lv-label.lv3 { background: #4caf50; }
+    .lv-label.lv-brave { background: #d32f2f; }
+    
+    .bp-text-wrapper { overflow: hidden; display: flex; margin-left: 2px; }
+    .bp-text {
+      font-size: 14px; font-weight: 700; font-family: Arial, sans-serif;
+      letter-spacing: 0.5px; white-space: nowrap; text-shadow: 1px 1px 3px #000; color: #fff;
+    }
+
+    .oc-header { display: flex; align-items: center; gap: 2px; }
+    .oc-badge { background: linear-gradient(135deg, #d32f2f, #b71c1c); color: #fff; border: 1px solid #ff8a80; font-size: 9px; font-weight: bold; padding: 0 3px; border-radius: 2px; }
+    .oc-cond-text { font-size: 11px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
+
+    /* 右下：効果テキストボックス */
+    .effect-box-container {
+      position: absolute; top: 335px; left: 85px; width: 305px; height: 195px; z-index: 10;
+      background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
+      padding: 6px 8px; box-sizing: border-box; overflow: hidden; transition: all 0.2s;
+    }
+    .effect-box-container.full-width { left: 10px; width: 380px; }
+
+    .effect-box {
+      width: 100%; height: 100%; font-size: 11px; line-height: 1.35;
+      text-shadow: 1px 1px 2px #000; overflow-y: auto;
+    }
+    .effect-section { margin-bottom: 5px; }
+
+    /* 合体条件バナー */
+    .brave-banner {
+      background: linear-gradient(90deg, #800000 0%, #d32f2f 50%, #800000 100%);
+      border-top: 1.5px solid #fff; border-bottom: 1.5px solid #fff;
+      color: #fff; font-size: 11.5px; font-weight: bold; text-align: center;
+      padding: 2px 0; margin: 6px -8px 4px -8px; letter-spacing: 1px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    /* 各種タグ・フレーム */
+    .kourin-container { background: linear-gradient(90deg, #b71c1c 0%, #4a0000 100%); border: 1px solid #ff5252; border-radius: 4px; padding: 4px 6px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+    .kourin-header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+    .kourin-tag { background: #ff5252; color: #000; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; font-weight: 800; }
+    .kourin-cond-text { font-size: 12px; font-weight: bold; color: #fff; }
+
+    .oc-banner { background: linear-gradient(90deg, #d32f2f 0%, #800000 80%, transparent 100%); border-top: 1px solid #ff8a80; border-bottom: 1px solid #ff8a80; color: #fff; font-size: 10.5px; font-weight: bold; padding: 2px 6px; margin: 6px -8px 4px -8px; display: flex; align-items: center; justify-content: space-between; }
+    
+    .tag-mirage { display: inline-block; background: linear-gradient(135deg, #e91e63, #c2185b); color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; border: 1px solid #ff80ab; margin-bottom: 2px; }
+    .tag-gw { display: inline-block; background: #8e24aa; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-bottom: 2px; border: 1px solid #fff; }
+    .tag-tense { display: inline-block; background: linear-gradient(135deg, #009688, #4db6ac); color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; border: 1px solid #fff; margin-bottom: 2px; }
+    .tag-burst { display: inline-block; background: linear-gradient(135deg, #d32f2f, #ff9800); color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; border: 1px solid #fff; margin-bottom: 2px; }
+    .tag-main { display: inline-block; background: #1976d2; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-bottom: 2px; }
+    .tag-flash { display: inline-block; background: #7b1fa2; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-bottom: 2px; }
+    .tag-oc { display: inline-block; background: #d32f2f; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 4px; border-radius: 2px; margin-right: 3px; }
+
+    .symbol-box { position: absolute; bottom: 8px; right: 8px; z-index: 10; display: flex; gap: 4px; }
+  </style>
+</head>
+<body>
+
+  <input type="file" id="image-file-input" accept="image/*" style="display:none;">
+
+  <div class="card-wrapper">
+    <div class="card" id="card-preview" title="タップまたは画像をドラッグして背景を変更">
+      <div class="card-img" id="card-bg"></div>
+
+      <div class="cost-box">
+        <div class="cost-circle-wrapper" id="out-cost-wrapper">
+          <div class="cost-circle" id="out-cost">5</div>
+        </div>
+      </div>
+      <div class="reduction-box" id="out-reduct"></div>
+
+      <div class="name-band" id="out-name-band">
+        <div class="card-type" id="out-type">ブレイヴ</div>
+        <div class="card-name-wrapper"><div class="card-name" id="out-name">突機竜アーケランサー</div></div>
+        <div class="card-system-wrapper"><div class="card-system" id="out-system">空牙・機竜</div></div>
+      </div>
+
+      <div class="lv-bp-box" id="out-lv-bp-box"></div>
+
+      <div class="effect-box-container" id="out-effect-container">
+        <div class="effect-box" id="out-effect"></div>
+      </div>
+
+      <div class="symbol-box" id="out-symbol"></div>
+    </div>
+  </div>
+
+  <div class="editor">
+    <h2>カード情報入力</h2>
+    <div class="editor-note">※カードをタップ/ページにファイルドロップで画像・設定読込<br>※使わない項目はチェックを外して非表示</div>
+    
+    <div class="form-group">
+      <label>属性カラー</label>
+      <select id="in-color">
+        <option value="white">白 (White)</option>
+        <option value="purple">紫 (Purple)</option>
+        <option value="red" selected>赤 (Red)</option>
+        <option value="green">緑 (Green)</option>
+        <option value="yellow">黄 (Yellow)</option>
+        <option value="blue">青 (Blue)</option>
+        <option value="rainbow">全色 (Rainbow)</option>
+      </select>
+    </div>
+
+    <div class="flex-row">
+      <div class="form-group flex-col"><label>コスト</label><input type="number" id="in-cost" value="5"></div>
+      <div class="form-group flex-col"><label>軽減数</label><input type="number" id="in-reduct" value="4" max="10"></div>
+    </div>
+
+    <div class="form-group"><label>カード名</label><input type="text" id="in-name" value="突機竜アーケランサー"></div>
+    
+    <div class="flex-row">
+      <div class="form-group flex-col"><label>種類</label><input type="text" id="in-type" value="ブレイヴ"></div>
+      <div class="form-group flex-col" style="flex:2;"><label>系統</label><input type="text" id="in-system" value="空牙・機竜"></div>
+    </div>
+
+    <div class="editor-section">通常テキスト / Lv効果</div>
+    <div class="form-group">
+      <textarea id="in-effect" rows="3"><b>Lv1 『このブレイヴの召喚時』</b>
+自分はデッキから1枚ドローし、相手のネクサス1つを破壊する。</textarea>
+    </div>
+
+    <div class="editor-section">基本効果・Lv/BP</div>
+    <div class="flex-row">
+      <div class="form-group flex-col">
+        <label>Lv1 コア / BP</label>
+        <div class="flex-row"><input type="text" id="in-lv1-core" value="1"><input type="text" id="in-lv1-bp" value="3000"></div>
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-col">
+        <label>Lv2 コア / BP</label>
+        <div class="flex-row"><input type="text" id="in-lv2-core" value=""><input type="text" id="in-lv2-bp" value=""></div>
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-col">
+        <label>Lv3 コア / BP</label>
+        <div class="flex-row"><input type="text" id="in-lv3-core" value=""><input type="text" id="in-lv3-bp" value=""></div>
+      </div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-main"> メイン効果（マジック等）</label></div>
+    <div id="sec-main" class="section-body" style="display:none;">
+      <div class="form-group"><textarea id="in-main-text" rows="2" placeholder="【メイン】効果を入力"></textarea></div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-flash"> フラッシュ効果</label></div>
+    <div id="sec-flash" class="section-body" style="display:none;">
+      <div class="form-group"><textarea id="in-flash-text" rows="2" placeholder="【フラッシュ】効果を入力"></textarea></div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-brave" checked> ブレイヴ設定</label></div>
+    <div id="sec-brave" class="section-body">
+      <div class="flex-row">
+        <div class="form-group flex-col"><label>合体条件</label><input type="text" id="in-brave-cond" value="コスト3以上"></div>
+        <div class="form-group flex-col"><label>合体+BP</label><input type="text" id="in-brave-bp" value="+3000"></div>
+      </div>
+      <div class="form-group">
+        <label>合体時 効果テキスト</label>
+        <textarea id="in-brave-effect" rows="2"><b>【合体中】『このスピリットのアタック時』</b>
+相手のネクサス1つを破壊する。</textarea>
+      </div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-burst"> バースト効果</label></div>
+    <div id="sec-burst" class="section-body" style="display:none;">
+      <div class="form-group">
+        <input type="text" id="in-burst-cond" placeholder="バースト条件 (例: 相手による自分のスピリット消滅/破壊後)">
+        <textarea id="in-burst-text" rows="2" placeholder="バースト効果テキスト"></textarea>
+      </div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-kourin"> 煌臨設定</label></div>
+    <div id="sec-kourin" class="section-body" style="display:none;">
+      <div class="form-group"><label>タイミング/種別</label><input type="text" id="in-kourin-type"></div>
+      <div class="form-group"><label>対象ステップ等</label><input type="text" id="in-kourin-cond"></div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-mirage"> ミラージュ設定</label></div>
+    <div id="sec-mirage" class="section-body" style="display:none;">
+      <div class="form-group">
+        <label>セットコスト</label><input type="text" id="in-mirage-cost" placeholder="例: コスト2(1)">
+      </div>
+      <div class="form-group">
+        <label>ミラージュ効果テキスト</label><textarea id="in-mirage-text" rows="2" placeholder="【ミラージュ：セット中】効果を入力"></textarea>
+      </div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-tense"> 転醒設定</label></div>
+    <div id="sec-tense" class="section-body" style="display:none;">
+      <div class="form-group"><label>転醒条件・テキスト</label><textarea id="in-tense-text" rows="2"></textarea></div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-gw"> 創界神（神託）設定</label></div>
+    <div id="sec-gw" class="section-body" style="display:none;">
+      <div class="form-group"><label>神託条件 (対象)</label><input type="text" id="in-gw-cond" placeholder="例: 銀零・武装＆コスト3以上"></div>
+      <div class="form-group"><label>神託テキスト (任意)</label><textarea id="in-gw-text" rows="2"></textarea></div>
+    </div>
+
+    <div class="editor-section"><label><input type="checkbox" id="chk-oc"> OC（オーバーカウント）</label></div>
+    <div id="sec-oc" class="section-body" style="display:none;">
+      <div class="flex-row">
+        <div class="form-group flex-col"><label>OC条件</label><input type="text" id="in-oc-cond"></div>
+        <div class="form-group flex-col"><label>OC加算BP</label><input type="text" id="in-oc-bp"></div>
+      </div>
+      <div class="form-group"><label>OC条件詳細文</label><input type="text" id="in-oc-detail"></div>
+      <div class="form-group"><label>OC中テキスト</label><textarea id="in-oc-effect" rows="2"></textarea></div>
+    </div>
+
+    <button id="btn-download" class="action-btn">カードを画像保存 (PNG)</button>
+    <button id="btn-export" class="action-btn btn-export">設定をエクスポート (JSON)</button>
+    <label class="action-btn btn-import-label">
+      設定をインポート (JSON)
+      <input type="file" id="btn-import" accept=".json" style="display:none;">
+    </label>
+  </div>
+
+  <script>
+    const COLOR_THEMES = {
+      white:   { main: '#e0e0e0', border: '#ffffff', symbol: '#ffffff', grad: 'linear-gradient(180deg, rgba(200,200,200,0.2) 0%, rgba(30,30,30,0.8) 100%)' },
+      purple:  { main: '#ab47bc', border: '#e1bee7', symbol: '#ab47bc', grad: 'linear-gradient(180deg, rgba(123,31,162,0.3) 0%, rgba(20,0,30,0.8) 100%)' },
+      red:     { main: '#ef5350', border: '#ffcdd2', symbol: '#ef5350', grad: 'linear-gradient(180deg, rgba(198,40,40,0.3) 0%, rgba(30,0,0,0.8) 100%)' },
+      green:   { main: '#66bb6a', border: '#c8e6c9', symbol: '#66bb6a', grad: 'linear-gradient(180deg, rgba(46,125,50,0.3) 0%, rgba(0,20,0,0.8) 100%)' },
+      yellow:  { main: '#ffee58', border: '#fff9c4', symbol: '#ffee58', grad: 'linear-gradient(180deg, rgba(240,200,0,0.3) 0%, rgba(30,20,0,0.8) 100%)' },
+      blue:    { main: '#42a5f5', border: '#bbdefb', symbol: '#42a5f5', grad: 'linear-gradient(180deg, rgba(21,101,192,0.3) 0%, rgba(0,10,30,0.8) 100%)' },
+      rainbow: { main: '#ffd700', border: '#ffffff', symbol: 'rainbow', grad: 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(10,10,10,0.8) 100%)' }
+    };
+
+    function setupToggleSection(chkId, secId) {
+      const chk = document.getElementById(chkId);
+      const sec = document.getElementById(secId);
+      if (!chk || !sec) return;
+      chk.addEventListener('change', () => { sec.style.display = chk.checked ? 'block' : 'none'; updateCard(); });
+    }
+
+    setupToggleSection('chk-burst', 'sec-burst');
+    setupToggleSection('chk-mirage', 'sec-mirage');
+    setupToggleSection('chk-gw', 'sec-gw');
+    setupToggleSection('chk-tense', 'sec-tense');
+    setupToggleSection('chk-kourin', 'sec-kourin');
+    setupToggleSection('chk-brave', 'sec-brave');
+    setupToggleSection('chk-oc', 'sec-oc');
+    setupToggleSection('chk-main', 'sec-main');
+    setupToggleSection('chk-flash', 'sec-flash');
+
+    function createSymbolSvg(color) {
+      if (color === 'rainbow') return `<svg width="24" height="24" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="url(#rgbGrad)" stroke="#fff" stroke-width="6"/><defs><linearGradient id="rgbGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="red"/><stop offset="20%" stop-color="yellow"/><stop offset="40%" stop-color="green"/><stop offset="60%" stop-color="cyan"/><stop offset="80%" stop-color="blue"/><stop offset="100%" stop-color="magenta"/></linearGradient></defs></svg>`;
+      return `<svg width="24" height="24" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="${color}" stroke="#ffffff" stroke-width="6"/></svg>`;
+    }
+
+    function autoScaleText(wrapper, target, maxFontSize) {
+      if (!wrapper || !target) return;
+      let fontSize = maxFontSize;
+      target.style.fontSize = fontSize + 'px';
+      while (target.scrollWidth > wrapper.clientWidth && fontSize > 11) {
+        fontSize -= 0.5;
+        target.style.fontSize = fontSize + 'px';
+      }
+    }
+
+    function getFileName() {
+      let name = document.getElementById('in-name').value.trim() || 'オリジナルカード';
+      return name.replace(/[\\/:*?"<>|]/g, '_');
+    }
+
+    function updateCard() {
+      const theme = COLOR_THEMES[document.getElementById('in-color').value];
+      
+      const card = document.getElementById('card-preview');
+      card.style.background = theme.grad;
+
+      const nameBand = document.getElementById('out-name-band');
+      if (document.getElementById('in-color').value === 'rainbow') {
+        nameBand.style.background = 'linear-gradient(90deg, red, yellow, green, blue, magenta)';
+      } else {
+        nameBand.style.background = `linear-gradient(90deg, ${theme.main} 0%, rgba(20,20,20,0.9) 80%)`;
+      }
+
+      document.getElementById('out-cost').innerText = document.getElementById('in-cost').value;
+      
+      const costWrapper = document.getElementById('out-cost-wrapper');
+      if (document.getElementById('in-color').value === 'rainbow') {
+        costWrapper.style.background = 'linear-gradient(135deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)';
+      } else {
+        costWrapper.style.background = theme.main;
+      }
+
+      const reductBox = document.getElementById('out-reduct');
+      reductBox.innerHTML = '';
+      const reductNum = parseInt(document.getElementById('in-reduct').value) || 0;
+      for (let i = 0; i < reductNum; i++) {
+        const sym = document.createElement('div');
+        sym.className = 'reduction-sym';
+        sym.style.background = theme.symbol === 'rainbow' ? 'linear-gradient(45deg, red, yellow, green, blue)' : theme.symbol;
+        reductBox.appendChild(sym);
+      }
+
+      document.getElementById('out-type').innerText = document.getElementById('in-type').value;
+      
+      const nameElem = document.getElementById('out-name');
+      nameElem.innerText = document.getElementById('in-name').value;
+      autoScaleText(document.querySelector('.card-name-wrapper'), nameElem, 20);
+
+      const sysElem = document.getElementById('out-system');
+      sysElem.innerText = document.getElementById('in-system').value;
+      autoScaleText(document.querySelector('.card-system-wrapper'), sysElem, 11);
+
+      const lvBpBox = document.getElementById('out-lv-bp-box');
+      const effectContainer = document.getElementById('out-effect-container');
+      lvBpBox.innerHTML = '';
+      let hasLeftContent = false;
+
+      ['1', '2', '3'].forEach(num => {
+        const core = document.getElementById(`in-lv${num}-core`).value;
+        const bp = document.getElementById(`in-lv${num}-bp`).value;
+        if (bp) {
+          hasLeftContent = true;
+          const item = document.createElement('div');
+          item.className = 'lv-item';
+          item.innerHTML = `
+            <div class="lv-header">
+              ${core ? `<div class="core-num">${core}</div>` : ''}
+              <span class="lv-label lv${num}">LV${num}</span>
+            </div>
+            <div class="bp-text-wrapper"><span class="bp-text">${bp}</span></div>
+          `;
+          lvBpBox.appendChild(item);
+        }
+      });
+
+      if (document.getElementById('chk-brave').checked) {
+        const bp = document.getElementById('in-brave-bp').value;
+        if (bp) {
+          hasLeftContent = true;
+          const braveItem = document.createElement('div');
+          braveItem.className = 'lv-item bordered';
+          braveItem.innerHTML = `
+            <div class="lv-header">
+              <div class="core-num">0</div>
+              <span class="lv-label lv-brave">合体</span>
+            </div>
+            <div class="bp-text-wrapper"><span class="bp-text">${bp}</span></div>
+          `;
+          lvBpBox.appendChild(braveItem);
+        }
+      }
+
+      if (document.getElementById('chk-oc').checked) {
+        const ocCond = document.getElementById('in-oc-cond').value;
+        const ocBp = document.getElementById('in-oc-bp').value;
+        if (ocCond || ocBp) {
+          hasLeftContent = true;
+          const ocItem = document.createElement('div');
+          ocItem.className = 'lv-item bordered';
+          ocItem.innerHTML = `
+            <div class="oc-header">
+              <span class="oc-badge">OC</span><span class="oc-cond-text">${ocCond}</span>
+            </div>
+            <div class="bp-text-wrapper"><span class="bp-text">${ocBp}</span></div>
+          `;
+          lvBpBox.appendChild(ocItem);
+        }
+      }
+
+      if (hasLeftContent) {
+        lvBpBox.style.display = 'flex';
+        effectContainer.classList.remove('full-width');
+      } else {
+        lvBpBox.style.display = 'none';
+        effectContainer.classList.add('full-width');
+      }
+
+      const effectBox = document.getElementById('out-effect');
+      effectBox.innerHTML = '';
+
+      if (document.getElementById('chk-burst').checked) {
+        const cond = document.getElementById('in-burst-cond').value;
+        const text = document.getElementById('in-burst-text').value;
+        if (cond || text) {
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = `<div><span class="tag-burst">【バースト：${cond}】</span></div><div>${text.replace(/\n/g, '<br>')}</div>`;
+          effectBox.appendChild(div);
+        }
+      }
+
+      if (document.getElementById('chk-mirage').checked) {
+        const mCost = document.getElementById('in-mirage-cost').value;
+        const mText = document.getElementById('in-mirage-text').value;
+        if (mCost || mText) {
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = `<div><span class="tag-mirage">【ミラージュ：セットコスト ${mCost}】</span></div><div>${mText.replace(/\n/g, '<br>')}</div>`;
+          effectBox.appendChild(div);
+        }
+      }
+
+      if (document.getElementById('chk-gw').checked) {
+        const cond = document.getElementById('in-gw-cond').value;
+        const text = document.getElementById('in-gw-text').value;
+        if (cond) {
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = `<div><span class="tag-gw">《神託：${cond}》</span></div><div>${text ? text.replace(/\n/g, '<br>') : ''}</div>`;
+          effectBox.appendChild(div);
+        }
+      }
+
+      if (document.getElementById('chk-tense').checked) {
+        const text = document.getElementById('in-tense-text').value;
+        if (text) {
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = `<div><span class="tag-tense">【転醒】</span> ${text.replace(/\n/g, '<br>')}</div>`;
+          effectBox.appendChild(div);
+        }
+      }
+
+      if (document.getElementById('chk-kourin').checked) {
+        const kType = document.getElementById('in-kourin-type').value;
+        const kCond = document.getElementById('in-kourin-cond').value;
+        if (kType) {
+          const div = document.createElement('div');
+          div.className = 'kourin-container';
+          div.innerHTML = `<div class="kourin-header"><span class="kourin-tag">${kType}</span><span class="kourin-cond-text">${kCond}</span></div>`;
+          effectBox.appendChild(div);
+        }
+      }
+
+      if (document.getElementById('chk-main').checked) {
+        const mText = document.getElementById('in-main-text').value;
+        if (mText) {
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = `<div><span class="tag-main">【メイン】</span></div><div>${mText.replace(/\n/g, '<br>')}</div>`;
+          effectBox.appendChild(div);
+        }
+      }
+
+      const mainEffect = document.getElementById('in-effect').value;
+      if (mainEffect) {
+        const div = document.createElement('div');
+        div.className = 'effect-section';
+        div.innerHTML = mainEffect.replace(/\n/g, '<br>');
+        effectBox.appendChild(div);
+      }
+
+      if (document.getElementById('chk-brave').checked) {
+        const cond = document.getElementById('in-brave-cond').value;
+        const braveEffect = document.getElementById('in-brave-effect').value;
+        
+        if (cond) {
+          const banner = document.createElement('div');
+          banner.className = 'brave-banner';
+          banner.innerText = `合体条件：${cond}`;
+          effectBox.appendChild(banner);
+        }
+        if (braveEffect) {
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = braveEffect.replace(/\n/g, '<br>');
+          effectBox.appendChild(div);
+        }
+      }
+
+      if (document.getElementById('chk-oc').checked) {
+        const ocDetail = document.getElementById('in-oc-detail').value;
+        const ocEffect = document.getElementById('in-oc-effect').value;
+        if (ocEffect) {
+          const banner = document.createElement('div');
+          banner.className = 'oc-banner';
+          banner.innerHTML = `<span><span class="tag-oc">【OC中】</span>${ocDetail}</span>`;
+          effectBox.appendChild(banner);
+
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = ocEffect.replace(/\n/g, '<br>');
+          effectBox.appendChild(div);
+        }
+      }
+
+      if (document.getElementById('chk-flash').checked) {
+        const flashText = document.getElementById('in-flash-text').value;
+        if (flashText) {
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = `<div><span class="tag-flash">【フラッシュ】</span></div><div>${flashText.replace(/\n/g, '<br>')}</div>`;
+          effectBox.appendChild(div);
+        }
+      }
+
+      const symBox = document.getElementById('out-symbol');
+      symBox.innerHTML = createSymbolSvg(theme.symbol);
+    }
+
+    document.querySelectorAll('.editor input, .editor textarea, .editor select').forEach(elem => {
+      elem.addEventListener('input', updateCard);
+    });
+
+    function loadSettingsFromJson(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const settings = JSON.parse(e.target.result);
+          
+          if (typeof settings !== 'object' || settings === null || Array.isArray(settings)) {
+            alert('エラー：無効な設定ファイル形式です。');
+            return;
+          }
+          
+          const hasValidKeys = Object.keys(settings).some(key => key.startsWith('in-') || key.startsWith('chk-') || key === 'bgImage');
+          if (!hasValidKeys) {
+            alert('エラー：このJSONファイルはオリジナルカードメーカーの設定ファイルではありません。');
+            return;
+          }
+
+          document.querySelectorAll('.editor input, .editor textarea, .editor select').forEach(elem => {
+            if (elem.id && settings[elem.id] !== undefined && elem.type !== 'file') {
+              if (elem.type === 'checkbox') {
+                elem.checked = settings[elem.id];
+                elem.dispatchEvent(new Event('change'));
+              } else {
+                elem.value = settings[elem.id];
+              }
+            }
+          });
+          document.getElementById('card-bg').style.backgroundImage = settings['bgImage'] ? `url(${settings['bgImage']})` : '';
+          updateCard();
+        } catch (err) { 
+          alert('エラー：JSONファイルの解析に失敗しました（構文エラー）。'); 
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    const cardPreview = document.getElementById('card-preview');
+    const imageFileInput = document.getElementById('image-file-input');
+
+    cardPreview.addEventListener('click', () => {
+      imageFileInput.click();
+    });
+
+    imageFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => { document.getElementById('card-bg').style.backgroundImage = `url(${event.target.result})`; };
+        reader.readAsDataURL(file);
+      }
+      e.target.value = '';
+    });
+
+    window.addEventListener('dragover', (e) => { e.preventDefault(); });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => { document.getElementById('card-bg').style.backgroundImage = `url(${event.target.result})`; };
+        reader.readAsDataURL(file);
+      } else if (file.type === 'application/json' || file.name.endsWith('.json')) {
+        loadSettingsFromJson(file);
+      } else {
+        alert('エラー：画像ファイルまたはJSONファイルをドロップしてください。');
+      }
+    });
+
+    document.getElementById('btn-export').addEventListener('click', () => {
+      const settings = {};
+      document.querySelectorAll('.editor input, .editor textarea, .editor select').forEach(elem => {
+        if (elem.id && elem.type !== 'file') settings[elem.id] = elem.type === 'checkbox' ? elem.checked : elem.value;
+      });
+      const bgImg = document.getElementById('card-bg').style.backgroundImage;
+      if (bgImg && bgImg !== 'none') {
+        const match = bgImg.match(/^url\(['"]?(.*?)['"]?\)$/);
+        if (match) settings['bgImage'] = match[1];
+      }
+      const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = getFileName() + '.json'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btn-import').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      loadSettingsFromJson(file);
+      event.target.value = '';
+    });
+
+    document.getElementById('btn-download').addEventListener('click', () => {
+      html2canvas(document.getElementById('card-preview'), { scale: 2 }).then(canvas => {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = getFileName() + '.png'; a.click();
+      });
+    });
+
+    updateCard();
+  </script>
+</body>
+</html>
