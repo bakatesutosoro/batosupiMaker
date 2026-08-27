@@ -211,12 +211,15 @@
 </head>
 <body>
 
+  <!-- スマホからの画像選択用隠しファイルinput -->
   <input type="file" id="image-file-input" accept="image/*" style="display:none;">
 
+  <!-- カードプレビュー（スマホ表示時は上） -->
   <div class="card-wrapper">
     <div class="card" id="card-preview" title="タップまたは画像をドラッグして背景を変更">
       <div class="card-img" id="card-bg"></div>
 
+      <!-- コスト＆軽減 -->
       <div class="cost-box">
         <div class="cost-circle-wrapper" id="out-cost-wrapper">
           <div class="cost-circle" id="out-cost">5</div>
@@ -224,26 +227,32 @@
       </div>
       <div class="reduction-box" id="out-reduct"></div>
 
+      <!-- ネームバンド -->
       <div class="name-band" id="out-name-band">
-        <div class="card-type" id="out-type">ブレイヴ</div>
-        <div class="card-name-wrapper"><div class="card-name" id="out-name">突機竜アーケランサー</div></div>
-        <div class="card-system-wrapper"><div class="card-system" id="out-system">空牙・機竜</div></div>
+        <div class="card-type" id="out-type">ネクサス</div>
+        <div class="card-name-wrapper"><div class="card-name" id="out-name">赤の世界</div></div>
+        <div class="card-system-wrapper"><div class="card-system" id="out-system">起幻</div></div>
       </div>
 
+      <!-- 左下：Lv/BP/OC/合体 -->
       <div class="lv-bp-box" id="out-lv-bp-box"></div>
 
+      <!-- 右下：効果エリア -->
       <div class="effect-box-container" id="out-effect-container">
         <div class="effect-box" id="out-effect"></div>
       </div>
 
+      <!-- シンボル -->
       <div class="symbol-box" id="out-symbol"></div>
     </div>
   </div>
 
+  <!-- 入力フォーム（スマホ表示時は下） -->
   <div class="editor">
     <h2>カード情報入力</h2>
     <div class="editor-note">※カードをタップ/ページにファイルドロップで画像・設定読込<br>※使わない項目はチェックを外して非表示</div>
     
+    <!-- 1. 基本設定 -->
     <div class="form-group">
       <label>属性カラー</label>
       <select id="in-color">
@@ -258,34 +267,36 @@
     </div>
 
     <div class="flex-row">
-      <div class="form-group flex-col"><label>コスト</label><input type="number" id="in-cost" value="5"></div>
-      <div class="form-group flex-col"><label>軽減数</label><input type="number" id="in-reduct" value="4" max="10"></div>
+      <div class="form-group flex-col"><label>コスト</label><input type="number" id="in-cost" value="3"></div>
+      <div class="form-group flex-col"><label>軽減数</label><input type="number" id="in-reduct" value="1" max="10"></div>
     </div>
 
-    <div class="form-group"><label>カード名</label><input type="text" id="in-name" value="突機竜アーケランサー"></div>
+    <div class="form-group"><label>カード名</label><input type="text" id="in-name" value="赤の世界"></div>
     
     <div class="flex-row">
-      <div class="form-group flex-col"><label>種類</label><input type="text" id="in-type" value="ブレイヴ"></div>
-      <div class="form-group flex-col" style="flex:2;"><label>系統</label><input type="text" id="in-system" value="空牙・機竜"></div>
+      <div class="form-group flex-col"><label>種類</label><input type="text" id="in-type" value="ネクサス"></div>
+      <div class="form-group flex-col" style="flex:2;"><label>系統</label><input type="text" id="in-system" value="起幻"></div>
     </div>
 
+    <!-- 2. 最頻出：通常テキスト / Lv効果 -->
     <div class="editor-section">通常テキスト / Lv効果</div>
     <div class="form-group">
-      <textarea id="in-effect" rows="3"><b>Lv1 『このブレイヴの召喚時』</b>
-自分はデッキから1枚ドローし、相手のネクサス1つを破壊する。</textarea>
+      <textarea id="in-effect" rows="3"><b>Lv1・Lv2</b>
+自分の赤のスピリットがアタックしたとき、相手のスピリット1体を破壊する。</textarea>
     </div>
 
-    <div class="editor-section">基本効果・Lv/BP</div>
+    <!-- 3. 基本効果・Lv/BP -->
+    <div class="editor-section">基本効果・Lv/BP (ネクサスはBP空欄でOK)</div>
     <div class="flex-row">
       <div class="form-group flex-col">
         <label>Lv1 コア / BP</label>
-        <div class="flex-row"><input type="text" id="in-lv1-core" value="1"><input type="text" id="in-lv1-bp" value="3000"></div>
+        <div class="flex-row"><input type="text" id="in-lv1-core" value="0"><input type="text" id="in-lv1-bp" value=""></div>
       </div>
     </div>
     <div class="flex-row">
       <div class="form-group flex-col">
         <label>Lv2 コア / BP</label>
-        <div class="flex-row"><input type="text" id="in-lv2-core" value=""><input type="text" id="in-lv2-bp" value=""></div>
+        <div class="flex-row"><input type="text" id="in-lv2-core" value="1"><input type="text" id="in-lv2-bp" value=""></div>
       </div>
     </div>
     <div class="flex-row">
@@ -295,29 +306,32 @@
       </div>
     </div>
 
+    <!-- 4. メイン効果 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-main"> メイン効果（マジック等）</label></div>
     <div id="sec-main" class="section-body" style="display:none;">
       <div class="form-group"><textarea id="in-main-text" rows="2" placeholder="【メイン】効果を入力"></textarea></div>
     </div>
 
+    <!-- 5. フラッシュ効果 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-flash"> フラッシュ効果</label></div>
     <div id="sec-flash" class="section-body" style="display:none;">
       <div class="form-group"><textarea id="in-flash-text" rows="2" placeholder="【フラッシュ】効果を入力"></textarea></div>
     </div>
 
-    <div class="editor-section"><label><input type="checkbox" id="chk-brave" checked> ブレイヴ設定</label></div>
-    <div id="sec-brave" class="section-body">
+    <!-- 6. ブレイヴ設定 -->
+    <div class="editor-section"><label><input type="checkbox" id="chk-brave"> ブレイヴ設定</label></div>
+    <div id="sec-brave" class="section-body" style="display:none;">
       <div class="flex-row">
         <div class="form-group flex-col"><label>合体条件</label><input type="text" id="in-brave-cond" value="コスト3以上"></div>
         <div class="form-group flex-col"><label>合体+BP</label><input type="text" id="in-brave-bp" value="+3000"></div>
       </div>
       <div class="form-group">
         <label>合体時 効果テキスト</label>
-        <textarea id="in-brave-effect" rows="2"><b>【合体中】『このスピリットのアタック時』</b>
-相手のネクサス1つを破壊する。</textarea>
+        <textarea id="in-brave-effect" rows="2"></textarea>
       </div>
     </div>
 
+    <!-- 7. バースト効果 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-burst"> バースト効果</label></div>
     <div id="sec-burst" class="section-body" style="display:none;">
       <div class="form-group">
@@ -326,12 +340,14 @@
       </div>
     </div>
 
+    <!-- 8. 煌臨設定 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-kourin"> 煌臨設定</label></div>
     <div id="sec-kourin" class="section-body" style="display:none;">
       <div class="form-group"><label>タイミング/種別</label><input type="text" id="in-kourin-type"></div>
       <div class="form-group"><label>対象ステップ等</label><input type="text" id="in-kourin-cond"></div>
     </div>
 
+    <!-- 9. ミラージュ設定 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-mirage"> ミラージュ設定</label></div>
     <div id="sec-mirage" class="section-body" style="display:none;">
       <div class="form-group">
@@ -342,17 +358,20 @@
       </div>
     </div>
 
+    <!-- 10. 転醒設定 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-tense"> 転醒設定</label></div>
     <div id="sec-tense" class="section-body" style="display:none;">
       <div class="form-group"><label>転醒条件・テキスト</label><textarea id="in-tense-text" rows="2"></textarea></div>
     </div>
 
+    <!-- 11. 創界神設定 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-gw"> 創界神（神託）設定</label></div>
     <div id="sec-gw" class="section-body" style="display:none;">
       <div class="form-group"><label>神託条件 (対象)</label><input type="text" id="in-gw-cond" placeholder="例: 銀零・武装＆コスト3以上"></div>
       <div class="form-group"><label>神託テキスト (任意)</label><textarea id="in-gw-text" rows="2"></textarea></div>
     </div>
 
+    <!-- 12. OC設定 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-oc"> OC（オーバーカウント）</label></div>
     <div id="sec-oc" class="section-body" style="display:none;">
       <div class="flex-row">
@@ -363,6 +382,7 @@
       <div class="form-group"><label>OC中テキスト</label><textarea id="in-oc-effect" rows="2"></textarea></div>
     </div>
 
+    <!-- ボタン類 -->
     <button id="btn-download" class="action-btn">カードを画像保存 (PNG)</button>
     <button id="btn-export" class="action-btn btn-export">設定をエクスポート (JSON)</button>
     <label class="action-btn btn-import-label">
@@ -466,10 +486,11 @@
       lvBpBox.innerHTML = '';
       let hasLeftContent = false;
 
+      // --- 変更箇所：コアかBPどちらかが入力されていれば表示 ---
       ['1', '2', '3'].forEach(num => {
         const core = document.getElementById(`in-lv${num}-core`).value;
         const bp = document.getElementById(`in-lv${num}-bp`).value;
-        if (bp) {
+        if (core || bp) {
           hasLeftContent = true;
           const item = document.createElement('div');
           item.className = 'lv-item';
@@ -478,7 +499,7 @@
               ${core ? `<div class="core-num">${core}</div>` : ''}
               <span class="lv-label lv${num}">LV${num}</span>
             </div>
-            <div class="bp-text-wrapper"><span class="bp-text">${bp}</span></div>
+            ${bp ? `<div class="bp-text-wrapper"><span class="bp-text">${bp}</span></div>` : ''}
           `;
           lvBpBox.appendChild(item);
         }
