@@ -50,6 +50,51 @@
     .flex-row { display: flex; gap: 8px; }
     .flex-col { flex: 1; }
 
+    /* 用語クイック挿入パレット */
+    .term-palette {
+      background: #262626; border: 1px solid #444; border-radius: 6px;
+      padding: 10px; margin-bottom: 14px;
+    }
+    .term-palette-title { font-size: 12px; color: #aaa; margin-bottom: 6px; }
+    .term-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .term-btn {
+      background: #3a3a3a; color: #fff; border: 1px solid #555; border-radius: 4px;
+      font-size: 12px; padding: 4px 9px; cursor: pointer; white-space: nowrap;
+    }
+    .term-btn:hover { background: #4c4c4c; }
+    .term-btn .term-del {
+      margin-left: 5px; color: #ff8a80; font-weight: bold;
+    }
+    .term-add-row { display: flex; gap: 6px; }
+    .term-add-row input {
+      flex: 1; box-sizing: border-box; padding: 5px 7px; background: #333;
+      border: 1px solid #555; color: #fff; border-radius: 4px; font-size: 12px;
+    }
+    .term-add-btn {
+      background: #1976d2; color: #fff; border: none; border-radius: 4px;
+      font-size: 12px; padding: 5px 12px; cursor: pointer;
+    }
+    .term-add-btn:hover { background: #115293; }
+
+    /* 効果文はみ出し警告 */
+    .overflow-warning {
+      display: none; background: #4a1414; border: 1px solid #d32f2f; color: #ff8a80;
+      font-size: 12px; padding: 8px 10px; border-radius: 5px; margin: 10px 0; line-height: 1.5;
+    }
+    .overflow-warning.show { display: block; }
+
+    /* 下書き復元バナー */
+    .draft-banner {
+      display: none; background: #123c2e; border: 1px solid #00e676; color: #b9f6ca;
+      font-size: 12px; padding: 8px 10px; border-radius: 5px; margin-bottom: 14px;
+      line-height: 1.5; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .draft-banner.show { display: flex; }
+    .draft-banner button {
+      background: #263238; color: #fff; border: 1px solid #607d8b; border-radius: 4px;
+      font-size: 11px; padding: 4px 8px; cursor: pointer; white-space: nowrap;
+    }
+
     /* ボタン類 */
     .action-btn {
       display: block; width: 100%; padding: 12px; border: none; border-radius: 4px;
@@ -154,6 +199,9 @@
     }
     .lv-label.lv2 { background: #fbc02d; color: #000; text-shadow: none; }
     .lv-label.lv3 { background: #4caf50; }
+    .lv-label.lv4 { background: #8e24aa; }
+    .lv-label.lv5 { background: #1b5e20; }
+    .lv-label.lv6 { background: #212121; border: 1px solid #888; }
     .lv-label.lv-brave { background: #d32f2f; }
     
     .bp-text-wrapper { overflow: hidden; display: flex; margin-left: 2px; }
@@ -162,9 +210,9 @@
       letter-spacing: 0.5px; white-space: nowrap; text-shadow: 1px 1px 3px #000; color: #fff;
     }
 
-    .oc-header { display: flex; align-items: center; gap: 2px; }
+    .oc-header { display: flex; align-items: center; gap: 2px; overflow: hidden; }
     .oc-badge { background: linear-gradient(135deg, #d32f2f, #b71c1c); color: #fff; border: 1px solid #ff8a80; font-size: 9px; font-weight: bold; padding: 0 3px; border-radius: 2px; }
-    .oc-cond-text { font-size: 11px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
+    .oc-cond-text { font-size: 11px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; white-space: nowrap; overflow: hidden; }
 
     /* 右下：効果テキストボックス */
     .effect-box-container {
@@ -216,6 +264,7 @@
     .tag-main { display: inline-block; background: #1976d2; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-bottom: 2px; }
     .tag-flash { display: inline-block; background: #7b1fa2; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-bottom: 2px; }
     .tag-oc { display: inline-block; background: #d32f2f; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 4px; border-radius: 2px; margin-right: 3px; }
+    .tag-utrigger { display: inline-block; background: linear-gradient(135deg, #ffb300, #ff6f00); color: #000; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; border: 1px solid #fff; margin-bottom: 2px; }
 
     .symbol-box { position: absolute; bottom: 8px; right: 8px; z-index: 10; display: flex; flex-wrap: wrap-reverse; justify-content: flex-end; gap: 4px; max-width: 120px; }
   </style>
@@ -262,7 +311,43 @@
   <div class="editor">
     <h2>カード情報入力</h2>
     <div class="editor-note">※カードをタップ/ページにファイルドロップで画像・設定読込<br>※使わない項目はチェックを外して非表示</div>
+
+    <!-- 下書き自動保存の復元バナー -->
+    <div class="draft-banner" id="draft-banner">
+      <span>前回入力の続きがあります。復元しますか？</span>
+      <span style="display:flex; gap:6px;">
+        <button id="btn-draft-restore">復元する</button>
+        <button id="btn-draft-discard">破棄する</button>
+      </span>
+    </div>
+
+    <!-- よく使う用語クイック挿入パレット -->
+    <div class="term-palette">
+      <div class="term-palette-title">よく使う用語（クリックで最後に選択したテキスト欄に挿入）</div>
+      <div class="term-list" id="term-list"></div>
+      <div class="term-add-row">
+        <input type="text" id="term-add-input" placeholder="用語を追加（例：起源、超転醒 など）">
+        <button class="term-add-btn" id="term-add-btn">＋追加</button>
+      </div>
+    </div>
     
+    <!-- 背景画像 位置・サイズ調整 -->
+    <div class="editor-section">背景画像 位置・サイズ調整</div>
+    <div class="form-group">
+      <label>拡大率（<span id="img-scale-val">100</span>%）</label>
+      <input type="range" id="in-img-scale" min="100" max="300" value="100">
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-col">
+        <label>横位置（<span id="img-x-val">50</span>%）</label>
+        <input type="range" id="in-img-x" min="0" max="100" value="50">
+      </div>
+      <div class="form-group flex-col">
+        <label>縦位置（<span id="img-y-val">50</span>%）</label>
+        <input type="range" id="in-img-y" min="0" max="100" value="50">
+      </div>
+    </div>
+
     <!-- 1. 基本設定 -->
     <div class="form-group">
       <label>属性カラー</label>
@@ -315,6 +400,24 @@
       <div class="form-group flex-col">
         <label>Lv3 コア / BP</label>
         <div class="flex-row"><input type="text" id="in-lv3-core" value=""><input type="text" id="in-lv3-bp" value=""></div>
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-col">
+        <label>Lv4 コア / BP</label>
+        <div class="flex-row"><input type="text" id="in-lv4-core" value=""><input type="text" id="in-lv4-bp" value=""></div>
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-col">
+        <label>Lv5 コア / BP</label>
+        <div class="flex-row"><input type="text" id="in-lv5-core" value=""><input type="text" id="in-lv5-bp" value=""></div>
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-col">
+        <label>Lv6 コア / BP</label>
+        <div class="flex-row"><input type="text" id="in-lv6-core" value=""><input type="text" id="in-lv6-bp" value=""></div>
       </div>
     </div>
 
@@ -394,6 +497,19 @@
       <div class="form-group"><label>OC中テキスト</label><textarea id="in-oc-effect" rows="2"></textarea></div>
     </div>
 
+    <!-- 13. アルティメットトリガー設定 -->
+    <div class="editor-section"><label><input type="checkbox" id="chk-utrigger"> アルティメットトリガー</label></div>
+    <div id="sec-utrigger" class="section-body" style="display:none;">
+      <div class="form-group"><label>対象Lv</label><input type="text" id="in-utrigger-lv" placeholder="例：Lv3・Lv4・Lv5"></div>
+      <div class="form-group"><label>発動条件</label><input type="text" id="in-utrigger-cond" placeholder="例：このアルティメットのアタック時"></div>
+      <div class="form-group"><label>ヒット時 効果テキスト</label><textarea id="in-utrigger-text" rows="2" placeholder="Uトリガーがヒットしたときの効果を入力"></textarea></div>
+    </div>
+
+    <!-- 効果文はみ出し警告 -->
+    <div class="overflow-warning" id="effect-overflow-warning">
+      ⚠ 効果文が枠に収まりきっていません。保存した画像では文字が見切れる可能性があります。文字数を減らすか、不要な項目のチェックを外してください。
+    </div>
+
     <!-- ボタン類 -->
     <button id="btn-download" class="action-btn">カードを画像保存 (PNG)</button>
     <button id="btn-export" class="action-btn btn-export">設定をエクスポート (JSON)</button>
@@ -430,17 +546,27 @@
     setupToggleSection('chk-oc', 'sec-oc');
     setupToggleSection('chk-main', 'sec-main');
     setupToggleSection('chk-flash', 'sec-flash');
+    setupToggleSection('chk-utrigger', 'sec-utrigger');
 
     function createSymbolSvg(color) {
       if (color === 'rainbow') return `<svg width="24" height="24" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="url(#rgbGrad)" stroke="#fff" stroke-width="6"/><defs><linearGradient id="rgbGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="red"/><stop offset="20%" stop-color="yellow"/><stop offset="40%" stop-color="green"/><stop offset="60%" stop-color="cyan"/><stop offset="80%" stop-color="blue"/><stop offset="100%" stop-color="magenta"/></linearGradient></defs></svg>`;
       return `<svg width="24" height="24" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="${color}" stroke="#ffffff" stroke-width="6"/></svg>`;
     }
 
-    function autoScaleText(wrapper, target, maxFontSize) {
+    // 種別に「アルティメット」が含まれる場合に使う専用シンボル（属性カラーに関わらず全色共通の見た目）
+    function createUltimateSymbolSvg() {
+      return `<svg width="24" height="24" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="#12121f" stroke="#ffd700" stroke-width="6"/>
+        <polygon points="50,16 80,50 50,84 20,50" fill="#ffd700"/>
+        <polygon points="50,30 68,50 50,70 32,50" fill="#12121f"/>
+      </svg>`;
+    }
+
+    function autoScaleText(wrapper, target, maxFontSize, minFontSize = 8) {
       if (!wrapper || !target) return;
       let fontSize = maxFontSize;
       target.style.fontSize = fontSize + 'px';
-      while (target.scrollWidth > wrapper.clientWidth && fontSize > 11) {
+      while (target.scrollWidth > wrapper.clientWidth && fontSize > minFontSize) {
         fontSize -= 0.5;
         target.style.fontSize = fontSize + 'px';
       }
@@ -457,6 +583,17 @@
       
       const card = document.getElementById('card-preview');
       card.style.background = theme.grad;
+
+      // 背景画像の拡大率・位置をスライダーの値に反映
+      const imgScale = document.getElementById('in-img-scale').value;
+      const imgX = document.getElementById('in-img-x').value;
+      const imgY = document.getElementById('in-img-y').value;
+      const cardBg = document.getElementById('card-bg');
+      cardBg.style.backgroundSize = imgScale + '%';
+      cardBg.style.backgroundPosition = `${imgX}% ${imgY}%`;
+      document.getElementById('img-scale-val').innerText = imgScale;
+      document.getElementById('img-x-val').innerText = imgX;
+      document.getElementById('img-y-val').innerText = imgY;
 
       // <b>タグの文字色を制御する設定
       if (colorVal === 'rainbow') {
@@ -496,11 +633,11 @@
       
       const nameElem = document.getElementById('out-name');
       nameElem.innerText = document.getElementById('in-name').value;
-      autoScaleText(document.querySelector('.card-name-wrapper'), nameElem, 20);
+      autoScaleText(document.querySelector('.card-name-wrapper'), nameElem, 20, 11);
 
       const sysElem = document.getElementById('out-system');
       sysElem.innerText = document.getElementById('in-system').value;
-      autoScaleText(document.querySelector('.card-system-wrapper'), sysElem, 11);
+      autoScaleText(document.querySelector('.card-system-wrapper'), sysElem, 11, 8);
 
       const lvBpBox = document.getElementById('out-lv-bp-box');
       const effectContainer = document.getElementById('out-effect-container');
@@ -508,7 +645,7 @@
       let hasLeftContent = false;
 
       // コアかBPのどちらかが入力されていれば表示
-      ['1', '2', '3'].forEach(num => {
+      ['1', '2', '3', '4', '5', '6'].forEach(num => {
         const core = document.getElementById(`in-lv${num}-core`).value;
         const bp = document.getElementById(`in-lv${num}-bp`).value;
         if (core || bp) {
@@ -523,6 +660,8 @@
             ${bp ? `<div class="bp-text-wrapper"><span class="bp-text">${bp}</span></div>` : ''}
           `;
           lvBpBox.appendChild(item);
+          const bpWrapper = item.querySelector('.bp-text-wrapper');
+          if (bpWrapper) autoScaleText(bpWrapper, bpWrapper.querySelector('.bp-text'), 14, 9);
         }
       });
 
@@ -540,6 +679,8 @@
             <div class="bp-text-wrapper"><span class="bp-text">${bp}</span></div>
           `;
           lvBpBox.appendChild(braveItem);
+          const braveBpWrapper = braveItem.querySelector('.bp-text-wrapper');
+          if (braveBpWrapper) autoScaleText(braveBpWrapper, braveBpWrapper.querySelector('.bp-text'), 14, 9);
         }
       }
 
@@ -557,6 +698,10 @@
             <div class="bp-text-wrapper"><span class="bp-text">${ocBp}</span></div>
           `;
           lvBpBox.appendChild(ocItem);
+          const ocHeader = ocItem.querySelector('.oc-header');
+          if (ocHeader) autoScaleText(ocHeader, ocHeader.querySelector('.oc-cond-text'), 11, 8);
+          const ocBpWrapper = ocItem.querySelector('.bp-text-wrapper');
+          if (ocBpWrapper) autoScaleText(ocBpWrapper, ocBpWrapper.querySelector('.bp-text'), 14, 9);
         }
       }
 
@@ -687,17 +832,42 @@
         }
       }
 
+      if (document.getElementById('chk-utrigger').checked) {
+        const uLv = document.getElementById('in-utrigger-lv').value;
+        const uCond = document.getElementById('in-utrigger-cond').value;
+        const uText = document.getElementById('in-utrigger-text').value;
+        if (uLv || uCond || uText) {
+          const div = document.createElement('div');
+          div.className = 'effect-section';
+          div.innerHTML = `<div><span class="tag-utrigger">Uアルティメットトリガー</span> ${uLv}${uCond ? `『${uCond}』` : ''}</div><div>${uText.replace(/\n/g, '<br>')}</div>`;
+          effectBox.appendChild(div);
+        }
+      }
+
+      // 効果文が枠に収まらない場合、自動で文字を縮小し、それでも収まらなければ警告を表示する
+      const overflowWarning = document.getElementById('effect-overflow-warning');
+      effectBox.style.fontSize = '11px';
+      let effFontSize = 11;
+      while (effectBox.scrollHeight > effectBox.clientHeight && effFontSize > 8) {
+        effFontSize -= 0.5;
+        effectBox.style.fontSize = effFontSize + 'px';
+      }
+      overflowWarning.classList.toggle('show', effectBox.scrollHeight > effectBox.clientHeight);
+
       const symBox = document.getElementById('out-symbol');
       symBox.innerHTML = '';
       const symNumRaw = parseInt(document.getElementById('in-symbol-num').value);
       const symCount = isNaN(symNumRaw) ? 1 : Math.max(0, symNumRaw);
+      const isUltimateType = document.getElementById('in-type').value.includes('アルティメット');
       for (let i = 0; i < symCount; i++) {
-        symBox.innerHTML += createSymbolSvg(theme.symbol);
+        symBox.innerHTML += isUltimateType ? createUltimateSymbolSvg() : createSymbolSvg(theme.symbol);
       }
     }
 
     document.querySelectorAll('.editor input, .editor textarea, .editor select').forEach(elem => {
       elem.addEventListener('input', updateCard);
+      elem.addEventListener('input', scheduleDraftAutosave);
+      elem.addEventListener('change', scheduleDraftAutosave);
     });
 
     function loadSettingsFromJson(file) {
@@ -850,6 +1020,139 @@
         alert('画像の生成に失敗しました。');
       });
     });
+
+    // ================= 下書き自動保存・復元 =================
+    // ※ アップロードした背景画像はサイズが大きくlocalStorageの容量を圧迫するため、
+    //    下書きの対象は文字系の項目のみとする（画像は都度再設定が必要）。
+    const DRAFT_KEY = 'bs_card_maker_draft_v1';
+    let draftAutosaveTimer = null;
+    function scheduleDraftAutosave() {
+      clearTimeout(draftAutosaveTimer);
+      draftAutosaveTimer = setTimeout(saveDraftNow, 800);
+    }
+    function collectFormSettings() {
+      const settings = {};
+      document.querySelectorAll('.editor input, .editor textarea, .editor select').forEach(elem => {
+        if (elem.id && elem.type !== 'file') settings[elem.id] = elem.type === 'checkbox' ? elem.checked : elem.value;
+      });
+      return settings;
+    }
+    function saveDraftNow() {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(collectFormSettings()));
+      } catch (e) {
+        // 容量オーバー等は無視（下書き保存はあくまで補助機能）
+      }
+    }
+    function applyDraft(settings) {
+      document.querySelectorAll('.editor input, .editor textarea, .editor select').forEach(elem => {
+        if (elem.id && settings[elem.id] !== undefined && elem.type !== 'file') {
+          if (elem.type === 'checkbox') {
+            elem.checked = settings[elem.id];
+            elem.dispatchEvent(new Event('change'));
+          } else {
+            elem.value = settings[elem.id];
+          }
+        }
+      });
+    }
+    function initDraftRestore() {
+      let saved;
+      try { saved = localStorage.getItem(DRAFT_KEY); } catch (e) { saved = null; }
+      if (!saved) return;
+      let settings;
+      try { settings = JSON.parse(saved); } catch (e) { return; }
+      if (!settings || typeof settings !== 'object') return;
+
+      const banner = document.getElementById('draft-banner');
+      banner.classList.add('show');
+      document.getElementById('btn-draft-restore').addEventListener('click', () => {
+        applyDraft(settings);
+        updateCard();
+        banner.classList.remove('show');
+      });
+      document.getElementById('btn-draft-discard').addEventListener('click', () => {
+        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+        banner.classList.remove('show');
+      });
+    }
+    initDraftRestore();
+
+    // ================= よく使う用語クイック挿入パレット =================
+    const TERM_STORAGE_KEY = 'bs_card_maker_terms_v1';
+    // バトルスピリッツの当て字・キーワード能力など、通常のIME変換では出てきにくい用語の初期セット。
+    // 「＋追加」で自由に追加/削除でき、内容はブラウザに保存されて次回も残る。
+    const DEFAULT_TERMS = ['転醒', '創界神', '煌臨', '界放'];
+
+    let lastFocusedTextInput = document.getElementById('in-effect');
+    document.querySelectorAll('.editor input[type="text"], .editor textarea').forEach(elem => {
+      elem.addEventListener('focus', () => { lastFocusedTextInput = elem; });
+    });
+
+    function loadTerms() {
+      try {
+        const raw = localStorage.getItem(TERM_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) return parsed;
+        }
+      } catch (e) {}
+      return DEFAULT_TERMS.slice();
+    }
+    function saveTerms(terms) {
+      try { localStorage.setItem(TERM_STORAGE_KEY, JSON.stringify(terms)); } catch (e) {}
+    }
+    let currentTerms = loadTerms();
+
+    function renderTermList() {
+      const list = document.getElementById('term-list');
+      list.innerHTML = '';
+      currentTerms.forEach((term, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'term-btn';
+        btn.innerHTML = `${term}<span class="term-del" title="この用語を削除">×</span>`;
+        btn.addEventListener('click', (e) => {
+          if (e.target.classList.contains('term-del')) {
+            currentTerms.splice(idx, 1);
+            saveTerms(currentTerms);
+            renderTermList();
+            return;
+          }
+          insertTermAtCursor(term);
+        });
+        list.appendChild(btn);
+      });
+    }
+
+    function insertTermAtCursor(term) {
+      const target = lastFocusedTextInput;
+      if (!target) return;
+      const start = target.selectionStart ?? target.value.length;
+      const end = target.selectionEnd ?? target.value.length;
+      target.value = target.value.slice(0, start) + term + target.value.slice(end);
+      const pos = start + term.length;
+      target.focus();
+      target.setSelectionRange(pos, pos);
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    document.getElementById('term-add-btn').addEventListener('click', addTermFromInput);
+    document.getElementById('term-add-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addTermFromInput(); }
+    });
+    function addTermFromInput() {
+      const input = document.getElementById('term-add-input');
+      const val = input.value.trim();
+      if (!val) return;
+      if (!currentTerms.includes(val)) {
+        currentTerms.push(val);
+        saveTerms(currentTerms);
+        renderTermList();
+      }
+      input.value = '';
+    }
+    renderTermList();
 
     updateCard();
   </script>
