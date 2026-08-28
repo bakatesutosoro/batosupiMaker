@@ -794,84 +794,9 @@
       event.target.value = '';
     });
 
-    // --- スマホでの保存に対応した画像書き出し処理 ---
+    // --- 画像書き出し処理 ---
     // ファイル名は getFileName() に統一し、JSON書き出しと同じ「カード名.png」で保存されるようにする。
-    // これにより端末やブラウザによって保存ファイル名がバラバラになる問題（表記ゆれ）を解消する。
-    function isMobileDevice() {
-      if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
-        return navigator.userAgentData.mobile;
-      }
-      return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    }
-    function showImageSaveOverlay(imgUrl, fileName) {
-      const overlay = document.createElement('div');
-      overlay.style.position = 'fixed';
-      overlay.style.top = '0'; overlay.style.left = '0';
-      overlay.style.width = '100vw'; overlay.style.height = '100vh';
-      overlay.style.backgroundColor = 'rgba(0,0,0,0.9)';
-      overlay.style.zIndex = '9999';
-      overlay.style.display = 'flex';
-      overlay.style.flexDirection = 'column';
-      overlay.style.justifyContent = 'center';
-      overlay.style.alignItems = 'center';
-      overlay.style.padding = '20px';
-      overlay.style.boxSizing = 'border-box';
-
-      const msg = document.createElement('div');
-      msg.innerHTML = '画像を<b>長押し</b>して保存（写真に追加）<br>うまく保存できない場合は下のボタンをタップ';
-      msg.style.color = '#fff';
-      msg.style.textAlign = 'center';
-      msg.style.marginBottom = '15px';
-      msg.style.lineHeight = '1.5';
-      msg.style.fontWeight = 'bold';
-
-      const img = document.createElement('img');
-      img.src = imgUrl;
-      img.style.maxWidth = '85%';
-      img.style.maxHeight = '60%';
-      img.style.borderRadius = '10px';
-      img.style.boxShadow = '0 5px 15px rgba(255,255,255,0.3)';
-
-      // download属性付きのリンクにすることで、対応ブラウザでは
-      // 保存ファイル名が常に fileName（カード名.png）に統一される。
-      const saveLink = document.createElement('a');
-      saveLink.href = imgUrl;
-      saveLink.download = fileName;
-      saveLink.innerText = `⬇ ${fileName} を保存`;
-      saveLink.style.display = 'block';
-      saveLink.style.marginTop = '18px';
-      saveLink.style.padding = '10px 24px';
-      saveLink.style.fontSize = '15px';
-      saveLink.style.fontWeight = 'bold';
-      saveLink.style.borderRadius = '5px';
-      saveLink.style.background = '#00796b';
-      saveLink.style.color = '#fff';
-      saveLink.style.textDecoration = 'none';
-      saveLink.style.textAlign = 'center';
-
-      const closeBtn = document.createElement('button');
-      closeBtn.innerText = '✖ 閉じる';
-      closeBtn.style.marginTop = '12px';
-      closeBtn.style.padding = '10px 30px';
-      closeBtn.style.fontSize = '16px';
-      closeBtn.style.fontWeight = 'bold';
-      closeBtn.style.border = 'none';
-      closeBtn.style.borderRadius = '5px';
-      closeBtn.style.background = '#d32f2f';
-      closeBtn.style.color = '#fff';
-      closeBtn.style.cursor = 'pointer';
-      closeBtn.onclick = () => {
-        document.body.removeChild(overlay);
-        URL.revokeObjectURL(imgUrl);
-      };
-
-      overlay.appendChild(msg);
-      overlay.appendChild(img);
-      overlay.appendChild(saveLink);
-      overlay.appendChild(closeBtn);
-      document.body.appendChild(overlay);
-    }
-
+    // PC・スマホ問わず a[download] によるダイレクトダウンロードのみを使い、挙動を統一する。
     document.getElementById('btn-download').addEventListener('click', () => {
       const btn = document.getElementById('btn-download');
       const originalLabel = btn.innerText;
@@ -879,7 +804,23 @@
       btn.disabled = true;
       const fileName = getFileName() + '.png';
 
+      // スマホ表示（画面幅440px未満）では .card-wrapper に transform: scale(0.78) が
+      // かかっており、これがついたまま html2canvas で撮影すると、内部の座標計算が
+      // ズレて文字やシンボルの位置がプレビューと食い違う原因になる。
+      // そのため撮影直前だけ transform を無効化し、プレビューと完全に同じ「等倍・原寸」の
+      // レイアウトで撮影してから元に戻す。
+      const wrapper = document.querySelector('.card-wrapper');
+      const prevTransform = wrapper.style.transform;
+      const prevMarginBottom = wrapper.style.marginBottom;
+      wrapper.style.transform = 'none';
+      wrapper.style.marginBottom = '0px';
+      // スタイル変更を確実にレイアウトへ反映させてから撮影する
+      void wrapper.offsetHeight;
+
       html2canvas(document.getElementById('card-preview'), { scale: 2, useCORS: true }).then(canvas => {
+        wrapper.style.transform = prevTransform;
+        wrapper.style.marginBottom = prevMarginBottom;
+
         canvas.toBlob(async (blob) => {
           btn.innerText = originalLabel;
           btn.disabled = false;
@@ -889,39 +830,21 @@
             return;
           }
 
-          const file = new File([blob], fileName, { type: 'image/png' });
-          const mobile = isMobileDevice();
-
-          // PC：ダイアログを挟まず、ブラウザの通常のダウンロード動作でそのまま保存する。
-          if (!mobile) {
-            const imgUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = imgUrl;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(imgUrl);
-            return;
-          }
-
-          // スマホ：Web Share API（共有シート）に対応していれば、
-          // ファイル名を保ったまま「写真に保存」等ができるようにする。
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-              await navigator.share({ files: [file], title: fileName });
-              return;
-            } catch (err) {
-              if (err && err.name === 'AbortError') return; // ユーザーがキャンセル
-              // それ以外のエラー時はフォールバックへ進む
-            }
-          }
-
-          // 共有シート非対応のスマホ向けフォールバック（長押し保存の案内）
+          // PC・スマホ共通：常に同じ方法でそのままダウンロードする。
+          // 共有シートを使うと保存先アプリの選択次第で挙動が毎回変わってしまうため、
+          // 表記ゆれを避けて挙動を統一するためにこの方式のみを使う。
           const imgUrl = URL.createObjectURL(blob);
-          showImageSaveOverlay(imgUrl, fileName);
+          const a = document.createElement('a');
+          a.href = imgUrl;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(imgUrl);
         }, 'image/png');
       }).catch(err => {
+        wrapper.style.transform = prevTransform;
+        wrapper.style.marginBottom = prevMarginBottom;
         btn.innerText = originalLabel;
         btn.disabled = false;
         alert('画像の生成に失敗しました。');
