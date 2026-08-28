@@ -9,15 +9,22 @@
     body {
       background-color: #2c2c2c; color: #fff;
       font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-      margin: 0; padding: 20px; display: flex; gap: 30px; justify-content: center; align-items: center;
-      flex-direction: column; /* スマホ用：上がプレビュー、下がエディター */
+      margin: 0; padding: 20px; display: flex; gap: 20px; justify-content: center; align-items: center;
+      flex-direction: column; /* 常にヘッダー要素(プレビュー+エディター)とフッターを縦に積む */
+    }
+
+    /* プレビュー＋エディターの行 */
+    .app-row {
+      display: flex; gap: 30px; justify-content: center; align-items: center;
+      flex-direction: column; width: 100%;
     }
 
     /* PC表示：左エディター、右プレビュー */
     @media (min-width: 850px) {
-      body {
+      .app-row {
         flex-direction: row-reverse;
         align-items: flex-start;
+        width: auto;
       }
     }
 
@@ -263,10 +270,55 @@
     .tag-burst { display: inline-block; background: linear-gradient(135deg, #d32f2f, #ff9800); color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; border: 1px solid #fff; margin-bottom: 2px; }
     .tag-main { display: inline-block; background: #1976d2; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-bottom: 2px; }
     .tag-flash { display: inline-block; background: #7b1fa2; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-bottom: 2px; }
+    .tag-accel { display: inline-flex; align-items: center; gap: 2px; background: #0288d1; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-left: 4px; margin-bottom: 2px; }
+    .accel-note { font-size: 9px; color: #bbb; margin-left: 4px; }
     .tag-oc { display: inline-block; background: #d32f2f; color: #fff; font-weight: bold; font-size: 9.5px; padding: 0 4px; border-radius: 2px; margin-right: 3px; }
     .tag-utrigger { display: inline-block; background: linear-gradient(135deg, #ffb300, #ff6f00); color: #000; font-weight: bold; font-size: 9.5px; padding: 0 5px; border-radius: 3px; border: 1px solid #fff; margin-bottom: 2px; }
 
     .symbol-box { position: absolute; bottom: 8px; right: 8px; z-index: 10; display: flex; flex-wrap: wrap-reverse; justify-content: flex-end; gap: 4px; max-width: 120px; }
+
+    /* ギャラリーモーダル */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.75); z-index: 9998; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: #1e1e1e; border: 1px solid #555; border-radius: 8px; width: 100%; max-width: 480px;
+      max-height: 80vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center; padding: 12px 14px;
+      border-bottom: 1px solid #444; color: #fff; font-weight: bold;
+    }
+    .modal-close { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; }
+    .modal-note { font-size: 11px; color: #999; padding: 8px 14px 0; }
+    #gallery-list { padding: 10px 14px; overflow-y: auto; }
+    .gallery-item {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      background: #2a2a2a; border: 1px solid #444; border-radius: 5px; padding: 8px 10px; margin-bottom: 8px;
+    }
+    .gallery-item-name { color: #fff; font-size: 13px; }
+    .gallery-item-date { color: #888; font-size: 10px; }
+    .gallery-item-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    .gallery-item-btns button {
+      font-size: 11px; padding: 5px 9px; border-radius: 4px; border: 1px solid #555; cursor: pointer;
+    }
+    .btn-gallery-load { background: #1976d2; color: #fff; }
+    .btn-gallery-del { background: #3a1414; color: #ff8a80; }
+    .gallery-empty { color: #888; font-size: 12px; text-align: center; padding: 20px 0; }
+
+    /* 法的表記フッター */
+    .site-footer {
+      width: 100%; max-width: 900px; margin: 24px auto 10px; padding: 14px 16px;
+      background: #1a1a1a; border: 1px solid #333; border-radius: 6px;
+      color: #888; font-size: 10.5px; line-height: 1.7; box-sizing: border-box;
+    }
+    .site-footer p { margin: 0 0 8px; }
+    .site-footer strong { color: #aaa; }
+    .footer-contact { color: #999; }
+    .footer-contact a { color: #4fc3f7; text-decoration: none; }
+    .footer-contact a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -274,6 +326,7 @@
   <!-- スマホからの画像選択用隠しファイルinput -->
   <input type="file" id="image-file-input" accept="image/*" style="display:none;">
 
+  <div class="app-row">
   <!-- カードプレビュー（スマホ表示時は上） -->
   <div class="card-wrapper">
     <div class="card" id="card-preview" title="タップまたは画像をドラッグして背景を変更">
@@ -431,6 +484,14 @@
     <div class="editor-section"><label><input type="checkbox" id="chk-flash"> フラッシュ効果</label></div>
     <div id="sec-flash" class="section-body" style="display:none;">
       <div class="form-group"><textarea id="in-flash-text" rows="2" placeholder="【フラッシュ】効果を入力"></textarea></div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#ccc; font-size:12px;">
+          <input type="checkbox" id="chk-flash-accel" style="width:16px; height:16px; accent-color:#00e676;"> アクセルを付与する（手札から使用可能にする）
+        </label>
+      </div>
+      <div id="sec-flash-accel" style="display:none;">
+        <div class="form-group flex-col"><label>アクセルコスト</label><input type="number" id="in-flash-accel-cost" value="3" min="0"></div>
+      </div>
     </div>
 
     <!-- 6. ブレイヴ設定 -->
@@ -517,7 +578,36 @@
       設定をインポート (JSON)
       <input type="file" id="btn-import" accept=".json" style="display:none;">
     </label>
+
+    <!-- マイギャラリー -->
+    <div class="editor-section">マイギャラリー（ブラウザに保存）</div>
+    <div class="flex-row" style="margin-bottom:8px;">
+      <button id="btn-gallery-save" class="action-btn" style="margin:0; flex:1; background:#455a64;">現在のカードをギャラリーに保存</button>
+      <button id="btn-gallery-open" class="action-btn" style="margin:0; flex:1; background:#455a64;">ギャラリーを開く</button>
+    </div>
   </div>
+  </div>
+
+  <!-- ギャラリーモーダル -->
+  <div id="gallery-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>マイギャラリー</span>
+        <button id="btn-gallery-close" class="modal-close">✖</button>
+      </div>
+      <div class="modal-note">※画像はデータ容量の都合で保存されません。テキスト設定のみ復元されます。</div>
+      <div id="gallery-list"></div>
+    </div>
+  </div>
+
+  <!-- 法的表記・フッター -->
+  <footer class="site-footer">
+    <p><strong>本ツールについて：</strong>本サイトは個人が制作したファンメイドの非公式カード作成ツールです。株式会社サンライズ、株式会社バンダイ、および「バトルスピリッツ」シリーズの権利者とは一切関係ありません。</p>
+    <p><strong>著作権について：</strong>「バトルスピリッツ」の名称・ロゴ・キーワード・世界観等の権利は各権利者に帰属します。本ツールで作成したカードを商用利用したり、公式カードと誤認させる用途（フリマ等での販売を含む）に使用しないでください。背景画像はご自身が権利を保有する画像、またはフリー素材等をご利用ください。第三者の著作物を無断で使用した場合の責任は利用者ご自身が負うものとします。</p>
+    <p><strong>利用規約（要約）：</strong>本ツールは個人利用・非商用の範囲でご自由にお使いいただけます。作成物の利用によって生じたいかなる損害についても、制作者は責任を負いません。</p>
+    <p><strong>権利者・第三者の方へ：</strong>本ツールの内容について問題がございましたら、下記までご連絡ください。確認の上、速やかに対応いたします。</p>
+    <p class="footer-contact">連絡先：<a href="https://twitter.com/sorobakiumu" target="_blank" rel="noopener noreferrer" id="footer-contact-email">@sorobakiumu（Twitter/X）</a></p>
+  </footer>
 
   <script>
     const COLOR_THEMES = {
@@ -546,11 +636,12 @@
     setupToggleSection('chk-oc', 'sec-oc');
     setupToggleSection('chk-main', 'sec-main');
     setupToggleSection('chk-flash', 'sec-flash');
+    setupToggleSection('chk-flash-accel', 'sec-flash-accel');
     setupToggleSection('chk-utrigger', 'sec-utrigger');
 
-    function createSymbolSvg(color) {
-      if (color === 'rainbow') return `<svg width="24" height="24" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="url(#rgbGrad)" stroke="#fff" stroke-width="6"/><defs><linearGradient id="rgbGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="red"/><stop offset="20%" stop-color="yellow"/><stop offset="40%" stop-color="green"/><stop offset="60%" stop-color="cyan"/><stop offset="80%" stop-color="blue"/><stop offset="100%" stop-color="magenta"/></linearGradient></defs></svg>`;
-      return `<svg width="24" height="24" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="${color}" stroke="#ffffff" stroke-width="6"/></svg>`;
+    function createSymbolSvg(color, size = 24) {
+      if (color === 'rainbow') return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="url(#rgbGrad)" stroke="#fff" stroke-width="6"/><defs><linearGradient id="rgbGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="red"/><stop offset="20%" stop-color="yellow"/><stop offset="40%" stop-color="green"/><stop offset="60%" stop-color="cyan"/><stop offset="80%" stop-color="blue"/><stop offset="100%" stop-color="magenta"/></linearGradient></defs></svg>`;
+      return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="${color}" stroke="#ffffff" stroke-width="6"/></svg>`;
     }
 
     // 種別に「アルティメット」が含まれる場合に使う専用シンボル（属性カラーに関わらず全色共通の見た目）
@@ -827,7 +918,13 @@
         if (flashText) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = `<div><span class="tag-flash">【フラッシュ】</span></div><div>${flashText.replace(/\n/g, '<br>')}</div>`;
+          let headerHtml = `<span class="tag-flash">【フラッシュ】</span>`;
+          if (document.getElementById('chk-flash-accel').checked) {
+            const accelCost = document.getElementById('in-flash-accel-cost').value;
+            const dot = createSymbolSvg(theme.symbol, 11);
+            headerHtml += ` <span class="tag-accel">アクセル コスト${accelCost}${dot}${dot}</span><span class="accel-note">（この効果は手札から使用できる）</span>`;
+          }
+          div.innerHTML = `<div>${headerHtml}</div><div>${flashText.replace(/\n/g, '<br>')}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -1153,6 +1250,89 @@
       input.value = '';
     }
     renderTermList();
+
+    // ================= マイギャラリー =================
+    // ※データ容量の都合上、背景画像は保存対象外（テキスト設定のみ保存）
+    const GALLERY_KEY = 'bs_card_maker_gallery_v1';
+    const GALLERY_MAX = 12;
+    function loadGallery() {
+      try {
+        const raw = localStorage.getItem(GALLERY_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) { return []; }
+    }
+    function saveGallery(items) {
+      try {
+        localStorage.setItem(GALLERY_KEY, JSON.stringify(items));
+        return true;
+      } catch (e) {
+        alert('保存に失敗しました。ギャラリーの保存件数が多すぎる可能性があります。不要なカードを削除してください。');
+        return false;
+      }
+    }
+    function renderGalleryList() {
+      const listEl = document.getElementById('gallery-list');
+      const items = loadGallery();
+      listEl.innerHTML = '';
+      if (items.length === 0) {
+        listEl.innerHTML = '<div class="gallery-empty">まだ保存されたカードはありません</div>';
+        return;
+      }
+      items.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'gallery-item';
+        row.innerHTML = `
+          <div>
+            <div class="gallery-item-name">${(item.name || '無題のカード').replace(/</g,'&lt;')}</div>
+            <div class="gallery-item-date">${item.savedAt || ''}</div>
+          </div>
+          <div class="gallery-item-btns">
+            <button class="btn-gallery-load">読み込む</button>
+            <button class="btn-gallery-del">削除</button>
+          </div>
+        `;
+        row.querySelector('.btn-gallery-load').addEventListener('click', () => {
+          applyDraft(item.settings);
+          updateCard();
+          document.getElementById('gallery-modal').classList.remove('show');
+        });
+        row.querySelector('.btn-gallery-del').addEventListener('click', () => {
+          if (!confirm('このカードをギャラリーから削除しますか？')) return;
+          const current = loadGallery();
+          current.splice(idx, 1);
+          saveGallery(current);
+          renderGalleryList();
+        });
+        listEl.appendChild(row);
+      });
+    }
+    document.getElementById('btn-gallery-save').addEventListener('click', () => {
+      const items = loadGallery();
+      if (items.length >= GALLERY_MAX) {
+        alert(`ギャラリーに保存できるのは最大${GALLERY_MAX}枚までです。不要なカードを削除してから保存してください。`);
+        return;
+      }
+      items.push({
+        name: document.getElementById('in-name').value.trim() || '無題のカード',
+        savedAt: new Date().toLocaleString('ja-JP'),
+        settings: collectFormSettings()
+      });
+      if (saveGallery(items)) {
+        renderGalleryList();
+        alert('ギャラリーに保存しました。');
+      }
+    });
+    document.getElementById('btn-gallery-open').addEventListener('click', () => {
+      renderGalleryList();
+      document.getElementById('gallery-modal').classList.add('show');
+    });
+    document.getElementById('btn-gallery-close').addEventListener('click', () => {
+      document.getElementById('gallery-modal').classList.remove('show');
+    });
+    document.getElementById('gallery-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'gallery-modal') document.getElementById('gallery-modal').classList.remove('show');
+    });
 
     updateCard();
   </script>
