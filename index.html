@@ -121,6 +121,14 @@
       flex-shrink: 0;
     }
 
+    /* PCではスクロールしてもプレビューが常に見えるよう追従させる（基本ルールより後ろに書いて確実に上書きする） */
+    @media (min-width: 850px) {
+      .card-wrapper {
+        position: sticky;
+        top: 20px;
+      }
+    }
+
     /* スマホでプレビューが画面からはみ出さないための縮小調整 */
     @media (max-width: 440px) {
       .card-wrapper {
