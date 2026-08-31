@@ -391,6 +391,16 @@
         <button class="term-add-btn" id="term-add-btn">＋追加</button>
       </div>
     </div>
+
+    <!-- 自動で太字にする用語 -->
+    <div class="term-palette">
+      <div class="term-palette-title">自動で太字にする用語（効果テキスト中にこの文字列があれば自動的に太字表示）</div>
+      <div class="term-list" id="bold-term-list"></div>
+      <div class="term-add-row">
+        <input type="text" id="bold-term-add-input" placeholder="太字にしたい用語を追加（例：覚醒、粉砕 など）">
+        <button class="term-add-btn" id="bold-term-add-btn">＋追加</button>
+      </div>
+    </div>
     
     <!-- 背景画像 位置・サイズ調整 -->
     <div class="editor-section">背景画像 位置・サイズ調整</div>
@@ -853,7 +863,7 @@
         if (cond || text) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = `<div><span class="tag-burst">【バースト：${cond}】</span></div><div>${text.replace(/\n/g, '<br>')}</div>`;
+          div.innerHTML = `<div><span class="tag-burst">【バースト：${cond}】</span></div><div>${formatEffectText(text)}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -869,7 +879,7 @@
           const mSymNum = parseInt(document.getElementById('in-mirage-symnum').value) || 0;
           let mDots = '';
           for (let i = 0; i < mSymNum; i++) mDots += createSymbolSvg(mSymColor, 11);
-          div.innerHTML = `<div><span class="tag-mirage">【ミラージュ：セットコスト ${mCost}${mDots}】</span></div><div>${mText.replace(/\n/g, '<br>')}</div>`;
+          div.innerHTML = `<div><span class="tag-mirage">【ミラージュ：セットコスト ${mCost}${mDots}】</span></div><div>${formatEffectText(mText)}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -880,7 +890,7 @@
         if (cond) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = `<div><span class="tag-gw">《神託：${cond}》</span></div><div>${text ? text.replace(/\n/g, '<br>') : ''}</div>`;
+          div.innerHTML = `<div><span class="tag-gw">《神託：${cond}》</span></div><div>${text ? formatEffectText(text) : ''}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -890,7 +900,7 @@
         if (text) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = `<div><span class="tag-tense">【転醒】</span> ${text.replace(/\n/g, '<br>')}</div>`;
+          div.innerHTML = `<div><span class="tag-tense">【転醒】</span> ${formatEffectText(text)}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -911,7 +921,7 @@
         if (mText) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = `<div><span class="tag-main">【メイン】</span></div><div>${mText.replace(/\n/g, '<br>')}</div>`;
+          div.innerHTML = `<div><span class="tag-main">【メイン】</span></div><div>${formatEffectText(mText)}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -920,7 +930,7 @@
       if (mainEffect) {
         const div = document.createElement('div');
         div.className = 'effect-section';
-        div.innerHTML = mainEffect.replace(/\n/g, '<br>');
+        div.innerHTML = formatEffectText(mainEffect);
         effectBox.appendChild(div);
       }
 
@@ -937,7 +947,7 @@
         if (braveEffect) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = braveEffect.replace(/\n/g, '<br>');
+          div.innerHTML = formatEffectText(braveEffect);
           effectBox.appendChild(div);
         }
       }
@@ -953,7 +963,7 @@
 
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = ocEffect.replace(/\n/g, '<br>');
+          div.innerHTML = formatEffectText(ocEffect);
           effectBox.appendChild(div);
         }
       }
@@ -973,7 +983,7 @@
             for (let i = 0; i < symNum; i++) dots += createSymbolSvg(symColor, 11);
             headerHtml += ` <span class="tag-accel">アクセル コスト${accelCost}${dots}</span><span class="accel-note">（この効果は手札から使用できる）</span>`;
           }
-          div.innerHTML = `<div>${headerHtml}</div><div>${flashText.replace(/\n/g, '<br>')}</div>`;
+          div.innerHTML = `<div>${headerHtml}</div><div>${formatEffectText(flashText)}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -985,7 +995,7 @@
         if (uLv || uCond || uText) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = `<div><span class="tag-utrigger">Uアルティメットトリガー</span> ${uLv}${uCond ? `『${uCond}』` : ''}</div><div>${uText.replace(/\n/g, '<br>')}</div>`;
+          div.innerHTML = `<div><span class="tag-utrigger">Uアルティメットトリガー</span> ${uLv}${uCond ? `『${uCond}』` : ''}</div><div>${formatEffectText(uText)}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -1299,6 +1309,82 @@
       input.value = '';
     }
     renderTermList();
+
+    // ================= 自動で太字にする用語 =================
+    const BOLD_TERM_KEY = 'bs_card_maker_bold_terms_v1';
+    // バトルスピリッツのキーワード能力など、太字表記になることが多い用語の初期セット。
+    // 「＋追加」で自由に追加/削除でき、内容はブラウザに保存されて次回も残る。
+    const DEFAULT_BOLD_TERMS = ['覚醒', '粉砕', '神速', '装甲', '光芒', '猛襲', '疾走', '転醒', '創界神', '煌臨', '界放'];
+
+    function loadBoldTerms() {
+      try {
+        const raw = localStorage.getItem(BOLD_TERM_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) return parsed;
+        }
+      } catch (e) {}
+      return DEFAULT_BOLD_TERMS.slice();
+    }
+    function saveBoldTerms(terms) {
+      try { localStorage.setItem(BOLD_TERM_KEY, JSON.stringify(terms)); } catch (e) {}
+    }
+    let currentBoldTerms = loadBoldTerms();
+
+    function escapeRegExp(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    // 効果テキストの改行を<br>に変換しつつ、登録済み用語を自動で太字化する
+    function formatEffectText(text) {
+      if (!text) return '';
+      let result = text;
+      // 長い用語から先に処理することで、短い用語が長い用語の一部を先に壊してしまうのを防ぐ
+      const sorted = currentBoldTerms.slice().sort((a, b) => b.length - a.length);
+      sorted.forEach(term => {
+        if (!term) return;
+        const re = new RegExp(escapeRegExp(term), 'g');
+        result = result.replace(re, `<b>${term}</b>`);
+      });
+      return result.replace(/\n/g, '<br>');
+    }
+
+    function renderBoldTermList() {
+      const list = document.getElementById('bold-term-list');
+      list.innerHTML = '';
+      currentBoldTerms.forEach((term, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'term-btn';
+        btn.innerHTML = `${term}<span class="term-del" title="この用語を削除">×</span>`;
+        btn.addEventListener('click', (e) => {
+          if (e.target.classList.contains('term-del')) {
+            currentBoldTerms.splice(idx, 1);
+            saveBoldTerms(currentBoldTerms);
+            renderBoldTermList();
+            updateCard();
+          }
+        });
+        list.appendChild(btn);
+      });
+    }
+
+    document.getElementById('bold-term-add-btn').addEventListener('click', addBoldTermFromInput);
+    document.getElementById('bold-term-add-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addBoldTermFromInput(); }
+    });
+    function addBoldTermFromInput() {
+      const input = document.getElementById('bold-term-add-input');
+      const val = input.value.trim();
+      if (!val) return;
+      if (!currentBoldTerms.includes(val)) {
+        currentBoldTerms.push(val);
+        saveBoldTerms(currentBoldTerms);
+        renderBoldTermList();
+        updateCard();
+      }
+      input.value = '';
+    }
+    renderBoldTermList();
 
     // ================= マイギャラリー =================
     // ※データ容量の都合上、背景画像は保存対象外（テキスト設定のみ保存）
