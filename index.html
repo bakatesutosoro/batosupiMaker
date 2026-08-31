@@ -498,7 +498,23 @@
         </label>
       </div>
       <div id="sec-flash-accel" style="display:none;">
-        <div class="form-group flex-col"><label>アクセルコスト</label><input type="number" id="in-flash-accel-cost" value="3" min="0"></div>
+        <div class="flex-row">
+          <div class="form-group flex-col"><label>アクセルコスト</label><input type="number" id="in-flash-accel-cost" value="3" min="0"></div>
+          <div class="form-group flex-col">
+            <label>コストシンボル色</label>
+            <select id="in-flash-accel-symcolor">
+              <option value="theme">属性カラーと同じ</option>
+              <option value="white">白</option>
+              <option value="purple">紫</option>
+              <option value="red">赤</option>
+              <option value="green">緑</option>
+              <option value="yellow">黄</option>
+              <option value="blue">青</option>
+              <option value="rainbow">全色</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group flex-col"><label>コストシンボル数</label><input type="number" id="in-flash-accel-symnum" value="2" min="0" max="6"></div>
       </div>
     </div>
 
@@ -536,6 +552,22 @@
     <div id="sec-mirage" class="section-body" style="display:none;">
       <div class="form-group">
         <label>セットコスト</label><input type="text" id="in-mirage-cost" placeholder="例: コスト2(1)">
+      </div>
+      <div class="flex-row">
+        <div class="form-group flex-col">
+          <label>コストシンボル色</label>
+          <select id="in-mirage-symcolor">
+            <option value="theme">属性カラーと同じ</option>
+            <option value="white">白</option>
+            <option value="purple">紫</option>
+            <option value="red">赤</option>
+            <option value="green">緑</option>
+            <option value="yellow">黄</option>
+            <option value="blue">青</option>
+            <option value="rainbow">全色</option>
+          </select>
+        </div>
+        <div class="form-group flex-col"><label>コストシンボル数</label><input type="number" id="in-mirage-symnum" value="1" min="0" max="6"></div>
       </div>
       <div class="form-group">
         <label>ミラージュ効果テキスト</label><textarea id="in-mirage-text" rows="2" placeholder="【ミラージュ：セット中】効果を入力"></textarea>
@@ -832,7 +864,12 @@
         if (mCost || mText) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = `<div><span class="tag-mirage">【ミラージュ：セットコスト ${mCost}】</span></div><div>${mText.replace(/\n/g, '<br>')}</div>`;
+          const mSymColorVal = document.getElementById('in-mirage-symcolor').value;
+          const mSymColor = mSymColorVal === 'theme' ? theme.symbol : COLOR_THEMES[mSymColorVal].symbol;
+          const mSymNum = parseInt(document.getElementById('in-mirage-symnum').value) || 0;
+          let mDots = '';
+          for (let i = 0; i < mSymNum; i++) mDots += createSymbolSvg(mSymColor, 11);
+          div.innerHTML = `<div><span class="tag-mirage">【ミラージュ：セットコスト ${mCost}${mDots}】</span></div><div>${mText.replace(/\n/g, '<br>')}</div>`;
           effectBox.appendChild(div);
         }
       }
@@ -929,8 +966,12 @@
           let headerHtml = `<span class="tag-flash">【フラッシュ】</span>`;
           if (document.getElementById('chk-flash-accel').checked) {
             const accelCost = document.getElementById('in-flash-accel-cost').value;
-            const dot = createSymbolSvg(theme.symbol, 11);
-            headerHtml += ` <span class="tag-accel">アクセル コスト${accelCost}${dot}${dot}</span><span class="accel-note">（この効果は手札から使用できる）</span>`;
+            const symColorVal = document.getElementById('in-flash-accel-symcolor').value;
+            const symColor = symColorVal === 'theme' ? theme.symbol : COLOR_THEMES[symColorVal].symbol;
+            const symNum = parseInt(document.getElementById('in-flash-accel-symnum').value) || 0;
+            let dots = '';
+            for (let i = 0; i < symNum; i++) dots += createSymbolSvg(symColor, 11);
+            headerHtml += ` <span class="tag-accel">アクセル コスト${accelCost}${dots}</span><span class="accel-note">（この効果は手札から使用できる）</span>`;
           }
           div.innerHTML = `<div>${headerHtml}</div><div>${flashText.replace(/\n/g, '<br>')}</div>`;
           effectBox.appendChild(div);
