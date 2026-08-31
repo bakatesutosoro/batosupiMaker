@@ -57,6 +57,18 @@
     .flex-row { display: flex; gap: 8px; }
     .flex-col { flex: 1; }
 
+    /* 複数選択できるカラーチェックボックス群（属性カラー・軽減シンボル色・シンボル色 共通） */
+    .color-check-group { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 4px; }
+    .color-check-item {
+      display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ddd;
+      cursor: pointer; user-select: none;
+    }
+    .color-check-item input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; }
+    .color-swatch {
+      display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.5); flex-shrink: 0;
+    }
+
     /* 用語クイック挿入パレット */
     .term-palette {
       background: #262626; border: 1px solid #444; border-radius: 6px;
@@ -421,22 +433,55 @@
 
     <!-- 1. 基本設定 -->
     <div class="form-group">
-      <label>属性カラー</label>
-      <select id="in-color">
-        <option value="white">白 (White)</option>
-        <option value="purple">紫 (Purple)</option>
-        <option value="red" selected>赤 (Red)</option>
-        <option value="green">緑 (Green)</option>
-        <option value="yellow">黄 (Yellow)</option>
-        <option value="blue">青 (Blue)</option>
-        <option value="rainbow">全色 (Rainbow)</option>
-      </select>
+      <label>属性カラー（複数選択可）</label>
+      <div class="color-check-group" id="group-attr">
+        <label class="color-check-item"><input type="checkbox" id="chk-attr-white"><span class="color-swatch" style="background:#e0e0e0"></span>白</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-attr-purple"><span class="color-swatch" style="background:#ab47bc"></span>紫</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-attr-red" checked><span class="color-swatch" style="background:#ef5350"></span>赤</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-attr-green"><span class="color-swatch" style="background:#66bb6a"></span>緑</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-attr-yellow"><span class="color-swatch" style="background:#ffee58"></span>黄</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-attr-blue"><span class="color-swatch" style="background:#42a5f5"></span>青</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-attr-rainbow"><span class="color-swatch" style="background:linear-gradient(45deg,red,yellow,green,blue)"></span>全色</label>
+      </div>
+      <div class="editor-note" style="margin:4px 0 0;">※2色以上選ぶと、選んだ色をブレンドしたカード背景になります</div>
     </div>
 
     <div class="flex-row">
       <div class="form-group flex-col"><label>コスト</label><input type="number" id="in-cost" value="3"></div>
       <div class="form-group flex-col"><label>軽減数</label><input type="number" id="in-reduct" value="1" max="10"></div>
       <div class="form-group flex-col"><label>シンボル数</label><input type="number" id="in-symbol-num" value="1" min="0" max="5"></div>
+    </div>
+
+    <div class="form-group">
+      <label>軽減シンボル色（複数選択可・神=創界神シンボル）</label>
+      <div class="color-check-group" id="group-reduct">
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-linked" checked>属性カラーと同じ</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-white"><span class="color-swatch" style="background:#e0e0e0"></span>白</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-purple"><span class="color-swatch" style="background:#ab47bc"></span>紫</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-red"><span class="color-swatch" style="background:#ef5350"></span>赤</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-green"><span class="color-swatch" style="background:#66bb6a"></span>緑</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-yellow"><span class="color-swatch" style="background:#ffee58"></span>黄</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-blue"><span class="color-swatch" style="background:#42a5f5"></span>青</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-rainbow"><span class="color-swatch" style="background:linear-gradient(45deg,red,yellow,green,blue)"></span>全色</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-god"><span class="color-swatch" style="background:radial-gradient(circle,#fffbe6,#d4af37)"></span>神(創界神)</label>
+      </div>
+      <div class="editor-note" style="margin:4px 0 0;">※複数選ぶと、軽減シンボルを左から順に色を切り替えながら表示します</div>
+    </div>
+
+    <div class="form-group">
+      <label>シンボル色（複数選択可・神=創界神シンボル）</label>
+      <div class="color-check-group" id="group-symbol">
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-linked" checked>属性カラーと同じ</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-white"><span class="color-swatch" style="background:#e0e0e0"></span>白</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-purple"><span class="color-swatch" style="background:#ab47bc"></span>紫</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-red"><span class="color-swatch" style="background:#ef5350"></span>赤</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-green"><span class="color-swatch" style="background:#66bb6a"></span>緑</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-yellow"><span class="color-swatch" style="background:#ffee58"></span>黄</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-blue"><span class="color-swatch" style="background:#42a5f5"></span>青</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-rainbow"><span class="color-swatch" style="background:linear-gradient(45deg,red,yellow,green,blue)"></span>全色</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-god"><span class="color-swatch" style="background:radial-gradient(circle,#fffbe6,#d4af37)"></span>神(創界神)</label>
+      </div>
+      <div class="editor-note" style="margin:4px 0 0;">※種類に「アルティメット」を含む場合はこの設定に関わらず専用シンボルが優先されます</div>
     </div>
 
     <div class="form-group"><label>カード名</label><input type="text" id="in-name" value="赤の世界"></div>
@@ -667,7 +712,8 @@
       green:   { main: '#66bb6a', border: '#c8e6c9', symbol: '#66bb6a', grad: 'linear-gradient(180deg, rgba(46,125,50,0.3) 0%, rgba(0,20,0,0.8) 100%)' },
       yellow:  { main: '#ffee58', border: '#fff9c4', symbol: '#ffee58', grad: 'linear-gradient(180deg, rgba(240,200,0,0.3) 0%, rgba(30,20,0,0.8) 100%)' },
       blue:    { main: '#42a5f5', border: '#bbdefb', symbol: '#42a5f5', grad: 'linear-gradient(180deg, rgba(21,101,192,0.3) 0%, rgba(0,10,30,0.8) 100%)' },
-      rainbow: { main: '#ffd700', border: '#ffffff', symbol: 'rainbow', grad: 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(10,10,10,0.8) 100%)' }
+      rainbow: { main: '#ffd700', border: '#ffffff', symbol: 'rainbow', grad: 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(10,10,10,0.8) 100%)' },
+      god:     { main: '#f5e050', border: '#fffbe6', symbol: 'god', grad: 'linear-gradient(180deg, rgba(212,175,55,0.3) 0%, rgba(20,15,0,0.8) 100%)' }
     };
 
     function setupToggleSection(chkId, secId) {
@@ -691,6 +737,8 @@
 
     function createSymbolSvg(color, size = 24) {
       if (color === 'rainbow') return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="url(#rgbGrad)" stroke="#fff" stroke-width="6"/><defs><linearGradient id="rgbGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="red"/><stop offset="20%" stop-color="yellow"/><stop offset="40%" stop-color="green"/><stop offset="60%" stop-color="cyan"/><stop offset="80%" stop-color="blue"/><stop offset="100%" stop-color="magenta"/></linearGradient></defs></svg>`;
+      // 創界神（神/ゴッド）専用シンボル：通常6属性とは別枠の軽減シンボルなので、金地に光の十字であしらい区別する
+      if (color === 'god') return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#fffbe6" stroke="#d4af37" stroke-width="6"/><path d="M50 20 L58 42 L80 50 L58 58 L50 80 L42 58 L20 50 L42 42 Z" fill="#d4af37"/></svg>`;
       return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="${color}" stroke="#ffffff" stroke-width="6"/></svg>`;
     }
 
@@ -718,12 +766,46 @@
       return name.replace(/[\\/:*?"<>|]/g, '_');
     }
 
+    // 属性カラーのチェックボックスから選択中の色キー一覧を取得する（未選択時は赤にフォールバック）
+    function getAttrColors() {
+      if (document.getElementById('chk-attr-rainbow').checked) return ['rainbow'];
+      const keys = ['white', 'purple', 'red', 'green', 'yellow', 'blue'];
+      const selected = keys.filter(k => document.getElementById(`chk-attr-${k}`).checked);
+      return selected.length ? selected : ['red'];
+    }
+
+    // 軽減シンボル色／シンボル色の共通取得ロジック。「属性カラーと同じ」がONならカードの属性カラーをそのまま使う
+    function getGroupColors(prefix, fallbackColors) {
+      const linked = document.getElementById(`chk-${prefix}-linked`);
+      if (linked && linked.checked) return fallbackColors;
+      const keys = ['white', 'purple', 'red', 'green', 'yellow', 'blue', 'rainbow', 'god'];
+      const selected = keys.filter(k => {
+        const el = document.getElementById(`chk-${prefix}-${k}`);
+        return el && el.checked;
+      });
+      return selected.length ? selected : fallbackColors;
+    }
+
+    // 複数の色キーからブレンド用のグラデーション文字列を作る（1色のときはそのままの色を返す）
+    function buildBlendGradient(colorKeys, angle = '135deg') {
+      const mains = colorKeys.map(k => COLOR_THEMES[k].main);
+      if (mains.length === 1) return mains[0];
+      const stops = mains.map((c, i) => `${c} ${Math.round((i / (mains.length - 1)) * 100)}%`).join(', ');
+      return `linear-gradient(${angle}, ${stops})`;
+    }
+
     function updateCard() {
-      const colorVal = document.getElementById('in-color').value;
-      const theme = COLOR_THEMES[colorVal];
-      
+      const attrColors = getAttrColors();
+      const isRainbow = attrColors.includes('rainbow');
+      const isMultiColor = !isRainbow && attrColors.length > 1;
+      const theme = COLOR_THEMES[attrColors[0]];
+
       const card = document.getElementById('card-preview');
-      card.style.background = theme.grad;
+      if (isMultiColor) {
+        card.style.background = buildBlendGradient(attrColors);
+      } else {
+        card.style.background = theme.grad;
+      }
 
       // 背景画像の拡大率・位置をスライダーの値に反映
       const imgScale = document.getElementById('in-img-scale').value;
@@ -737,7 +819,7 @@
       document.getElementById('img-y-val').innerText = imgY;
 
       // <b>タグの文字色を制御する設定
-      if (colorVal === 'rainbow') {
+      if (isRainbow) {
         card.classList.add('theme-rainbow');
       } else {
         card.classList.remove('theme-rainbow');
@@ -745,8 +827,11 @@
       }
 
       const nameBand = document.getElementById('out-name-band');
-      if (colorVal === 'rainbow') {
+      if (isRainbow) {
         nameBand.style.background = 'linear-gradient(90deg, red, yellow, green, blue, magenta)';
+      } else if (isMultiColor) {
+        const stops = attrColors.map((k, i) => `${COLOR_THEMES[k].main} ${Math.round((i / attrColors.length) * 70)}%`).join(', ');
+        nameBand.style.background = `linear-gradient(90deg, ${stops}, rgba(20,20,20,0.9) 90%)`;
       } else {
         nameBand.style.background = `linear-gradient(90deg, ${theme.main} 0%, rgba(20,20,20,0.9) 80%)`;
       }
@@ -754,8 +839,10 @@
       document.getElementById('out-cost').innerText = document.getElementById('in-cost').value;
       
       const costWrapper = document.getElementById('out-cost-wrapper');
-      if (colorVal === 'rainbow') {
+      if (isRainbow) {
         costWrapper.style.background = 'linear-gradient(135deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)';
+      } else if (isMultiColor) {
+        costWrapper.style.background = buildBlendGradient(attrColors);
       } else {
         costWrapper.style.background = theme.main;
       }
@@ -763,10 +850,19 @@
       const reductBox = document.getElementById('out-reduct');
       reductBox.innerHTML = '';
       const reductNum = parseInt(document.getElementById('in-reduct').value) || 0;
+      const reductColors = getGroupColors('reduct', attrColors);
       for (let i = 0; i < reductNum; i++) {
+        const colorKey = reductColors[i % reductColors.length];
+        const symVal = COLOR_THEMES[colorKey].symbol;
         const sym = document.createElement('div');
         sym.className = 'reduction-sym';
-        sym.style.background = theme.symbol === 'rainbow' ? 'linear-gradient(45deg, red, yellow, green, blue)' : theme.symbol;
+        if (symVal === 'rainbow') {
+          sym.style.background = 'linear-gradient(45deg, red, yellow, green, blue)';
+        } else if (symVal === 'god') {
+          sym.style.background = 'radial-gradient(circle, #fffbe6, #d4af37)';
+        } else {
+          sym.style.background = symVal;
+        }
         reductBox.appendChild(sym);
       }
 
@@ -1015,8 +1111,14 @@
       const symNumRaw = parseInt(document.getElementById('in-symbol-num').value);
       const symCount = isNaN(symNumRaw) ? 1 : Math.max(0, symNumRaw);
       const isUltimateType = document.getElementById('in-type').value.includes('アルティメット');
+      const symbolColors = getGroupColors('symbol', attrColors);
       for (let i = 0; i < symCount; i++) {
-        symBox.innerHTML += isUltimateType ? createUltimateSymbolSvg() : createSymbolSvg(theme.symbol);
+        if (isUltimateType) {
+          symBox.innerHTML += createUltimateSymbolSvg();
+        } else {
+          const colorKey = symbolColors[i % symbolColors.length];
+          symBox.innerHTML += createSymbolSvg(COLOR_THEMES[colorKey].symbol);
+        }
       }
     }
 
