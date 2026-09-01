@@ -68,6 +68,8 @@
       display: inline-block; width: 14px; height: 14px; border-radius: 50%;
       border: 1px solid rgba(255,255,255,0.5); flex-shrink: 0;
     }
+    .color-check-item.color-check-disabled { opacity: 0.35; cursor: not-allowed; }
+    .color-check-item.color-check-disabled input[type="checkbox"] { cursor: not-allowed; }
 
     /* 用語クイック挿入パレット */
     .term-palette {
@@ -180,7 +182,7 @@
       position: absolute; top: 14px; left: 71px; z-index: 10;
       display: grid; grid-template-rows: repeat(2, 18px); grid-auto-flow: column; gap: 4px; max-width: 220px;
     }
-    .reduction-sym { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #fff; box-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+    .reduction-sym { width: 18px; height: 18px; filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.8)); }
 
     .name-band {
       position: absolute; top: 295px; left: 0; width: 100%; height: 32px;
@@ -433,6 +435,12 @@
 
     <!-- 1. 基本設定 -->
     <div class="form-group">
+      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="checkbox" id="chk-multicolor-mode" style="width:16px; height:16px; accent-color:#00e676;"> 複色カードにする（属性カラー・軽減・シンボルをそれぞれ複数選択する）
+      </label>
+    </div>
+
+    <div class="form-group" id="wrap-attr-multi" style="display:none;">
       <label>属性カラー（複数選択可）</label>
       <div class="color-check-group" id="group-attr">
         <label class="color-check-item"><input type="checkbox" id="chk-attr-white"><span class="color-swatch" style="background:#e0e0e0"></span>白</label>
@@ -446,13 +454,26 @@
       <div class="editor-note" style="margin:4px 0 0;">※2色以上選ぶと、選んだ色をブレンドしたカード背景になります</div>
     </div>
 
+    <div class="form-group" id="wrap-attr-simple">
+      <label>属性カラー</label>
+      <select id="in-attr-simple">
+        <option value="white">白</option>
+        <option value="purple">紫</option>
+        <option value="red" selected>赤</option>
+        <option value="green">緑</option>
+        <option value="yellow">黄</option>
+        <option value="blue">青</option>
+        <option value="rainbow">全色</option>
+      </select>
+    </div>
+
     <div class="flex-row">
       <div class="form-group flex-col"><label>コスト</label><input type="number" id="in-cost" value="3"></div>
       <div class="form-group flex-col"><label>軽減数</label><input type="number" id="in-reduct" value="1" max="10"></div>
       <div class="form-group flex-col"><label>シンボル数</label><input type="number" id="in-symbol-num" value="1" min="0" max="5"></div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" id="wrap-reduct-multi" style="display:none;">
       <label>軽減シンボル色（複数選択可・神=創界神シンボル）</label>
       <div class="color-check-group" id="group-reduct">
         <label class="color-check-item"><input type="checkbox" id="chk-reduct-linked" checked>属性カラーと同じ</label>
@@ -463,12 +484,13 @@
         <label class="color-check-item"><input type="checkbox" id="chk-reduct-yellow"><span class="color-swatch" style="background:#ffee58"></span>黄</label>
         <label class="color-check-item"><input type="checkbox" id="chk-reduct-blue"><span class="color-swatch" style="background:#42a5f5"></span>青</label>
         <label class="color-check-item"><input type="checkbox" id="chk-reduct-rainbow"><span class="color-swatch" style="background:linear-gradient(45deg,red,yellow,green,blue)"></span>全色</label>
-        <label class="color-check-item"><input type="checkbox" id="chk-reduct-god"><span class="color-swatch" style="background:radial-gradient(circle,#fffbe6,#d4af37)"></span>神(創界神)</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-god"><span class="color-swatch" style="background:#4fc3f7"></span>神(創界神)</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-reduct-ult"><span class="color-swatch" style="background:linear-gradient(135deg,#ffd700,#12121f)"></span>アルティメット</label>
       </div>
       <div class="editor-note" style="margin:4px 0 0;">※複数選ぶと、軽減シンボルを左から順に色を切り替えながら表示します</div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" id="wrap-symbol-multi" style="display:none;">
       <label>シンボル色（複数選択可・神=創界神シンボル）</label>
       <div class="color-check-group" id="group-symbol">
         <label class="color-check-item"><input type="checkbox" id="chk-symbol-linked" checked>属性カラーと同じ</label>
@@ -479,9 +501,9 @@
         <label class="color-check-item"><input type="checkbox" id="chk-symbol-yellow"><span class="color-swatch" style="background:#ffee58"></span>黄</label>
         <label class="color-check-item"><input type="checkbox" id="chk-symbol-blue"><span class="color-swatch" style="background:#42a5f5"></span>青</label>
         <label class="color-check-item"><input type="checkbox" id="chk-symbol-rainbow"><span class="color-swatch" style="background:linear-gradient(45deg,red,yellow,green,blue)"></span>全色</label>
-        <label class="color-check-item"><input type="checkbox" id="chk-symbol-god"><span class="color-swatch" style="background:radial-gradient(circle,#fffbe6,#d4af37)"></span>神(創界神)</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-god"><span class="color-swatch" style="background:#4fc3f7"></span>神(創界神)</label>
+        <label class="color-check-item"><input type="checkbox" id="chk-symbol-ult"><span class="color-swatch" style="background:linear-gradient(135deg,#ffd700,#12121f)"></span>アルティメット</label>
       </div>
-      <div class="editor-note" style="margin:4px 0 0;">※種類に「アルティメット」を含む場合はこの設定に関わらず専用シンボルが優先されます</div>
     </div>
 
     <div class="form-group"><label>カード名</label><input type="text" id="in-name" value="赤の世界"></div>
@@ -553,23 +575,23 @@
         </label>
       </div>
       <div id="sec-flash-accel" style="display:none;">
-        <div class="flex-row">
-          <div class="form-group flex-col"><label>アクセルコスト</label><input type="number" id="in-flash-accel-cost" value="3" min="0"></div>
-          <div class="form-group flex-col">
-            <label>コストシンボル色</label>
-            <select id="in-flash-accel-symcolor">
-              <option value="theme">属性カラーと同じ</option>
-              <option value="white">白</option>
-              <option value="purple">紫</option>
-              <option value="red">赤</option>
-              <option value="green">緑</option>
-              <option value="yellow">黄</option>
-              <option value="blue">青</option>
-              <option value="rainbow">全色</option>
-            </select>
+        <div class="form-group flex-col"><label>アクセルコスト</label><input type="number" id="in-flash-accel-cost" value="3" min="0"></div>
+        <div class="form-group flex-col"><label>コストシンボル数</label><input type="number" id="in-flash-accel-symnum" value="2" min="0" max="6"></div>
+        <div class="form-group" id="wrap-accel-multi" style="display:none;">
+          <label>コストシンボル色（複数選択可）</label>
+          <div class="color-check-group" id="group-accel">
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-linked" checked>属性カラーと同じ</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-white"><span class="color-swatch" style="background:#e0e0e0"></span>白</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-purple"><span class="color-swatch" style="background:#ab47bc"></span>紫</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-red"><span class="color-swatch" style="background:#ef5350"></span>赤</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-green"><span class="color-swatch" style="background:#66bb6a"></span>緑</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-yellow"><span class="color-swatch" style="background:#ffee58"></span>黄</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-blue"><span class="color-swatch" style="background:#42a5f5"></span>青</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-rainbow"><span class="color-swatch" style="background:linear-gradient(45deg,red,yellow,green,blue)"></span>全色</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-god"><span class="color-swatch" style="background:#4fc3f7"></span>神(創界神)</label>
+            <label class="color-check-item"><input type="checkbox" id="chk-accel-ult"><span class="color-swatch" style="background:linear-gradient(135deg,#ffd700,#12121f)"></span>アルティメット</label>
           </div>
         </div>
-        <div class="form-group flex-col"><label>コストシンボル数</label><input type="number" id="in-flash-accel-symnum" value="2" min="0" max="6"></div>
       </div>
     </div>
 
@@ -608,21 +630,21 @@
       <div class="form-group">
         <label>セットコスト</label><input type="text" id="in-mirage-cost" placeholder="例: コスト2(1)">
       </div>
-      <div class="flex-row">
-        <div class="form-group flex-col">
-          <label>コストシンボル色</label>
-          <select id="in-mirage-symcolor">
-            <option value="theme">属性カラーと同じ</option>
-            <option value="white">白</option>
-            <option value="purple">紫</option>
-            <option value="red">赤</option>
-            <option value="green">緑</option>
-            <option value="yellow">黄</option>
-            <option value="blue">青</option>
-            <option value="rainbow">全色</option>
-          </select>
+      <div class="form-group flex-col"><label>コストシンボル数</label><input type="number" id="in-mirage-symnum" value="1" min="0" max="6"></div>
+      <div class="form-group" id="wrap-mirage-multi" style="display:none;">
+        <label>コストシンボル色（複数選択可）</label>
+        <div class="color-check-group" id="group-mirage">
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-linked" checked>属性カラーと同じ</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-white"><span class="color-swatch" style="background:#e0e0e0"></span>白</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-purple"><span class="color-swatch" style="background:#ab47bc"></span>紫</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-red"><span class="color-swatch" style="background:#ef5350"></span>赤</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-green"><span class="color-swatch" style="background:#66bb6a"></span>緑</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-yellow"><span class="color-swatch" style="background:#ffee58"></span>黄</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-blue"><span class="color-swatch" style="background:#42a5f5"></span>青</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-rainbow"><span class="color-swatch" style="background:linear-gradient(45deg,red,yellow,green,blue)"></span>全色</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-god"><span class="color-swatch" style="background:#4fc3f7"></span>神(創界神)</label>
+          <label class="color-check-item"><input type="checkbox" id="chk-mirage-ult"><span class="color-swatch" style="background:linear-gradient(135deg,#ffd700,#12121f)"></span>アルティメット</label>
         </div>
-        <div class="form-group flex-col"><label>コストシンボル数</label><input type="number" id="in-mirage-symnum" value="1" min="0" max="6"></div>
       </div>
       <div class="form-group">
         <label>ミラージュ効果テキスト</label><textarea id="in-mirage-text" rows="2" placeholder="【ミラージュ：セット中】効果を入力"></textarea>
@@ -713,7 +735,7 @@
       yellow:  { main: '#ffee58', border: '#fff9c4', symbol: '#ffee58', grad: 'linear-gradient(180deg, rgba(240,200,0,0.3) 0%, rgba(30,20,0,0.8) 100%)' },
       blue:    { main: '#42a5f5', border: '#bbdefb', symbol: '#42a5f5', grad: 'linear-gradient(180deg, rgba(21,101,192,0.3) 0%, rgba(0,10,30,0.8) 100%)' },
       rainbow: { main: '#ffd700', border: '#ffffff', symbol: 'rainbow', grad: 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(10,10,10,0.8) 100%)' },
-      god:     { main: '#f5e050', border: '#fffbe6', symbol: 'god', grad: 'linear-gradient(180deg, rgba(212,175,55,0.3) 0%, rgba(20,15,0,0.8) 100%)' }
+      god:     { main: '#4fc3f7', border: '#ffffff', symbol: 'god', grad: 'linear-gradient(180deg, rgba(79,195,247,0.3) 0%, rgba(0,20,30,0.8) 100%)' }
     };
 
     function setupToggleSection(chkId, secId) {
@@ -737,14 +759,14 @@
 
     function createSymbolSvg(color, size = 24) {
       if (color === 'rainbow') return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="url(#rgbGrad)" stroke="#fff" stroke-width="6"/><defs><linearGradient id="rgbGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="red"/><stop offset="20%" stop-color="yellow"/><stop offset="40%" stop-color="green"/><stop offset="60%" stop-color="cyan"/><stop offset="80%" stop-color="blue"/><stop offset="100%" stop-color="magenta"/></linearGradient></defs></svg>`;
-      // 創界神（神/ゴッド）専用シンボル：通常6属性とは別枠の軽減シンボルなので、金地に光の十字であしらい区別する
-      if (color === 'god') return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#fffbe6" stroke="#d4af37" stroke-width="6"/><path d="M50 20 L58 42 L80 50 L58 58 L50 80 L42 58 L20 50 L42 42 Z" fill="#d4af37"/></svg>`;
+      // 創界神（神/ゴッド）専用シンボル：黄色と紛らわしくないよう、水色のしずく型で区別する
+      if (color === 'god') return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><path d="M50 8 C50 8 18 52 18 72 A32 32 0 1 0 82 72 C82 52 50 8 50 8 Z" fill="#4fc3f7" stroke="#ffffff" stroke-width="6"/></svg>`;
       return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="${color}" stroke="#ffffff" stroke-width="6"/></svg>`;
     }
 
     // 種別に「アルティメット」が含まれる場合に使う専用シンボル（属性カラーに関わらず全色共通の見た目）
-    function createUltimateSymbolSvg() {
-      return `<svg width="24" height="24" viewBox="0 0 100 100">
+    function createUltimateSymbolSvg(size = 24) {
+      return `<svg width="${size}" height="${size}" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="42" fill="#12121f" stroke="#ffd700" stroke-width="6"/>
         <polygon points="50,16 80,50 50,84 20,50" fill="#ffd700"/>
         <polygon points="50,30 68,50 50,70 32,50" fill="#12121f"/>
@@ -768,17 +790,22 @@
 
     // 属性カラーのチェックボックスから選択中の色キー一覧を取得する（未選択時は赤にフォールバック）
     function getAttrColors() {
+      if (!document.getElementById('chk-multicolor-mode').checked) {
+        return [document.getElementById('in-attr-simple').value];
+      }
       if (document.getElementById('chk-attr-rainbow').checked) return ['rainbow'];
       const keys = ['white', 'purple', 'red', 'green', 'yellow', 'blue'];
       const selected = keys.filter(k => document.getElementById(`chk-attr-${k}`).checked);
       return selected.length ? selected : ['red'];
     }
 
-    // 軽減シンボル色／シンボル色の共通取得ロジック。「属性カラーと同じ」がONならカードの属性カラーをそのまま使う
+    // 軽減シンボル色／シンボル色／ミラージュ・アクセルのコストシンボル色の共通取得ロジック。
+    // 「属性カラーと同じ」がONならカードの属性カラーをそのまま使う。複色カードモードがOFFのときは常に属性カラーに従う。
     function getGroupColors(prefix, fallbackColors) {
+      if (!document.getElementById('chk-multicolor-mode').checked) return fallbackColors;
       const linked = document.getElementById(`chk-${prefix}-linked`);
       if (linked && linked.checked) return fallbackColors;
-      const keys = ['white', 'purple', 'red', 'green', 'yellow', 'blue', 'rainbow', 'god'];
+      const keys = ['white', 'purple', 'red', 'green', 'yellow', 'blue', 'rainbow', 'god', 'ult'];
       const selected = keys.filter(k => {
         const el = document.getElementById(`chk-${prefix}-${k}`);
         return el && el.checked;
@@ -793,6 +820,91 @@
       const stops = mains.map((c, i) => `${c} ${Math.round((i / (mains.length - 1)) * 100)}%`).join(', ');
       return `linear-gradient(${angle}, ${stops})`;
     }
+
+    // 「全色」チェック時は他の色チェックをグレーアウトして選べなくする（属性カラー用）
+    function setupAttrColorExclusivity() {
+      const rainbow = document.getElementById('chk-attr-rainbow');
+      const others = ['white', 'purple', 'red', 'green', 'yellow', 'blue'].map(k => document.getElementById(`chk-attr-${k}`));
+
+      function syncDisabled() {
+        others.forEach(el => {
+          el.disabled = rainbow.checked;
+          el.closest('.color-check-item').classList.toggle('color-check-disabled', rainbow.checked);
+        });
+      }
+      rainbow.addEventListener('change', syncDisabled);
+      others.forEach(el => {
+        el.addEventListener('change', () => {
+          if (el.checked && rainbow.checked) {
+            rainbow.checked = false;
+            syncDisabled();
+          }
+        });
+      });
+      syncDisabled();
+    }
+
+    // 「属性カラーと同じ」チェック時は個別の色チェックをグレーアウトして選べなくする（軽減／シンボル／ミラージュ／アクセル用）
+    function setupLinkedColorGroup(prefix) {
+      const linked = document.getElementById(`chk-${prefix}-linked`);
+      const colorKeys = ['white', 'purple', 'red', 'green', 'yellow', 'blue', 'rainbow', 'god', 'ult'];
+      const colorEls = colorKeys.map(k => document.getElementById(`chk-${prefix}-${k}`));
+
+      function syncDisabled() {
+        colorEls.forEach(el => {
+          el.disabled = linked.checked;
+          el.closest('.color-check-item').classList.toggle('color-check-disabled', linked.checked);
+        });
+      }
+      linked.addEventListener('change', syncDisabled);
+      colorEls.forEach(el => {
+        el.addEventListener('change', () => {
+          if (el.checked && linked.checked) {
+            linked.checked = false;
+            syncDisabled();
+          }
+        });
+      });
+      syncDisabled();
+    }
+
+    setupAttrColorExclusivity();
+    setupLinkedColorGroup('reduct');
+    setupLinkedColorGroup('symbol');
+    setupLinkedColorGroup('mirage');
+    setupLinkedColorGroup('accel');
+
+    // 「複色カードにする」がOFFのときは複色関連の項目を全て非表示にし、
+    // 属性カラーだけはシンプルな単一セレクトで選べるようにする
+    function syncMulticolorVisibility() {
+      const on = document.getElementById('chk-multicolor-mode').checked;
+      document.getElementById('wrap-attr-multi').style.display = on ? '' : 'none';
+      document.getElementById('wrap-attr-simple').style.display = on ? 'none' : '';
+      ['wrap-reduct-multi', 'wrap-symbol-multi', 'wrap-mirage-multi', 'wrap-accel-multi'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = on ? '' : 'none';
+      });
+      if (!on) {
+        // OFFに切り替えた時点で選ばれていた属性カラー（複数選ばれていれば先頭）をシンプルセレクトに反映する
+        if (document.getElementById('chk-attr-rainbow').checked) {
+          document.getElementById('in-attr-simple').value = 'rainbow';
+        } else {
+          const keys = ['white', 'purple', 'red', 'green', 'yellow', 'blue'];
+          const firstChecked = keys.find(k => document.getElementById(`chk-attr-${k}`).checked);
+          document.getElementById('in-attr-simple').value = firstChecked || 'red';
+        }
+      }
+    }
+    document.getElementById('chk-multicolor-mode').addEventListener('change', syncMulticolorVisibility);
+    document.getElementById('in-attr-simple').addEventListener('change', () => {
+      const val = document.getElementById('in-attr-simple').value;
+      document.getElementById('chk-attr-rainbow').checked = (val === 'rainbow');
+      ['white', 'purple', 'red', 'green', 'yellow', 'blue'].forEach(k => {
+        document.getElementById(`chk-attr-${k}`).checked = (k === val);
+      });
+      updateCard();
+    });
+    syncMulticolorVisibility();
 
     function updateCard() {
       const attrColors = getAttrColors();
@@ -853,17 +965,14 @@
       const reductColors = getGroupColors('reduct', attrColors);
       for (let i = 0; i < reductNum; i++) {
         const colorKey = reductColors[i % reductColors.length];
-        const symVal = COLOR_THEMES[colorKey].symbol;
-        const sym = document.createElement('div');
-        sym.className = 'reduction-sym';
-        if (symVal === 'rainbow') {
-          sym.style.background = 'linear-gradient(45deg, red, yellow, green, blue)';
-        } else if (symVal === 'god') {
-          sym.style.background = 'radial-gradient(circle, #fffbe6, #d4af37)';
+        const wrap = document.createElement('div');
+        wrap.className = 'reduction-sym';
+        if (colorKey === 'ult') {
+          wrap.innerHTML = createUltimateSymbolSvg(18);
         } else {
-          sym.style.background = symVal;
+          wrap.innerHTML = createSymbolSvg(COLOR_THEMES[colorKey].symbol, 18);
         }
-        reductBox.appendChild(sym);
+        reductBox.appendChild(wrap);
       }
 
       document.getElementById('out-type').innerText = document.getElementById('in-type').value;
@@ -970,11 +1079,13 @@
         if (mCost || mText) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          const mSymColorVal = document.getElementById('in-mirage-symcolor').value;
-          const mSymColor = mSymColorVal === 'theme' ? theme.symbol : COLOR_THEMES[mSymColorVal].symbol;
+          const mSymColors = getGroupColors('mirage', attrColors);
           const mSymNum = parseInt(document.getElementById('in-mirage-symnum').value) || 0;
           let mDots = '';
-          for (let i = 0; i < mSymNum; i++) mDots += createSymbolSvg(mSymColor, 11);
+          for (let i = 0; i < mSymNum; i++) {
+            const colorKey = mSymColors[i % mSymColors.length];
+            mDots += colorKey === 'ult' ? createUltimateSymbolSvg(11) : createSymbolSvg(COLOR_THEMES[colorKey].symbol, 11);
+          }
           div.innerHTML = `<div><span class="tag-mirage">【ミラージュ：セットコスト ${mCost}${mDots}】</span></div><div>${formatEffectText(mText)}</div>`;
           effectBox.appendChild(div);
         }
@@ -1072,11 +1183,13 @@
           let headerHtml = `<span class="tag-flash">【フラッシュ】</span>`;
           if (document.getElementById('chk-flash-accel').checked) {
             const accelCost = document.getElementById('in-flash-accel-cost').value;
-            const symColorVal = document.getElementById('in-flash-accel-symcolor').value;
-            const symColor = symColorVal === 'theme' ? theme.symbol : COLOR_THEMES[symColorVal].symbol;
+            const accelColors = getGroupColors('accel', attrColors);
             const symNum = parseInt(document.getElementById('in-flash-accel-symnum').value) || 0;
             let dots = '';
-            for (let i = 0; i < symNum; i++) dots += createSymbolSvg(symColor, 11);
+            for (let i = 0; i < symNum; i++) {
+              const colorKey = accelColors[i % accelColors.length];
+              dots += colorKey === 'ult' ? createUltimateSymbolSvg(11) : createSymbolSvg(COLOR_THEMES[colorKey].symbol, 11);
+            }
             headerHtml += ` <span class="tag-accel">アクセル コスト${accelCost}${dots}</span><span class="accel-note">（この効果は手札から使用できる）</span>`;
           }
           div.innerHTML = `<div>${headerHtml}</div><div>${formatEffectText(flashText)}</div>`;
@@ -1110,13 +1223,12 @@
       symBox.innerHTML = '';
       const symNumRaw = parseInt(document.getElementById('in-symbol-num').value);
       const symCount = isNaN(symNumRaw) ? 1 : Math.max(0, symNumRaw);
-      const isUltimateType = document.getElementById('in-type').value.includes('アルティメット');
       const symbolColors = getGroupColors('symbol', attrColors);
       for (let i = 0; i < symCount; i++) {
-        if (isUltimateType) {
+        const colorKey = symbolColors[i % symbolColors.length];
+        if (colorKey === 'ult') {
           symBox.innerHTML += createUltimateSymbolSvg();
         } else {
-          const colorKey = symbolColors[i % symbolColors.length];
           symBox.innerHTML += createSymbolSvg(COLOR_THEMES[colorKey].symbol);
         }
       }
