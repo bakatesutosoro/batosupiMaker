@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>オリジナルカードメーカー</title>
+  <title>オリジナルカードメーカー｜バトルスピリッツ風カードを自作＆画像保存（非公式）</title>
+  <meta name="description" content="バトルスピリッツ風のオリジナルカードを無料で作成できる非公式ファンメイドツール。属性カラー・軽減・シンボル・各種能力を細かくカスタマイズして、PNG画像として保存できます。">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="オリジナルカードメーカー｜バトルスピリッツ風カードを自作＆画像保存">
+  <meta property="og:description" content="バトルスピリッツ風のオリジナルカードを無料で作成できる非公式ファンメイドツール。">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2216%22 fill=%22%23c62828%22/><circle cx=%2250%22 cy=%2250%22 r=%2230%22 fill=%22%23ffd700%22/></svg>">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     body {
@@ -132,6 +139,8 @@
     .btn-export:hover { background: #004d40; }
     .btn-import-label { background: #1976d2; }
     .btn-import-label:hover { background: #115293; }
+    .btn-reset-all { background: #4a1414; color: #ff8a80; border: 1px solid #d32f2f; }
+    .btn-reset-all:hover { background: #5c1a1a; }
 
     /* カードプレビュー部分 */
     .card-wrapper {
@@ -334,6 +343,17 @@
     .btn-gallery-del { background: #3a1414; color: #ff8a80; }
     .gallery-empty { color: #888; font-size: 12px; text-align: center; padding: 20px 0; }
 
+    /* ページ上部の見出し（SEO用のh1。デザインの邪魔にならないよう控えめに） */
+    .page-header {
+      width: 100%; max-width: 900px; text-align: center; margin: 0 auto 6px; padding: 0 10px;
+    }
+    .page-header h1 {
+      font-size: 15px; font-weight: bold; color: #ccc; margin: 0 0 4px;
+    }
+    .page-header p {
+      font-size: 11px; color: #777; margin: 0;
+    }
+
     /* 法的表記フッター */
     .site-footer {
       width: 100%; max-width: 900px; margin: 24px auto 10px; padding: 14px 16px;
@@ -351,6 +371,11 @@
 
   <!-- スマホからの画像選択用隠しファイルinput -->
   <input type="file" id="image-file-input" accept="image/*" style="display:none;">
+
+  <header class="page-header">
+    <h1>オリジナルカードメーカー</h1>
+    <p>バトルスピリッツ風のオリジナルカードを作成・画像保存できる非公式のファンメイドツールです。</p>
+  </header>
 
   <div class="app-row">
   <!-- カードプレビュー（スマホ表示時は上） -->
@@ -702,6 +727,7 @@
       設定をインポート (JSON)
       <input type="file" id="btn-import" accept=".json" style="display:none;">
     </label>
+    <button id="btn-reset-all" class="action-btn btn-reset-all">全てリセット</button>
 
     <!-- マイギャラリー -->
     <div class="editor-section">マイギャラリー（ブラウザに保存）</div>
@@ -1363,6 +1389,10 @@
     // ファイル名は getFileName() に統一し、JSON書き出しと同じ「カード名.png」で保存されるようにする。
     // PC・スマホ問わず a[download] によるダイレクトダウンロードのみを使い、挙動を統一する。
     document.getElementById('btn-download').addEventListener('click', () => {
+      if (typeof html2canvas === 'undefined') {
+        alert('画像保存機能の読み込みに失敗しました。通信環境をご確認の上、ページを再読み込みしてから、もう一度お試しください。');
+        return;
+      }
       const btn = document.getElementById('btn-download');
       const originalLabel = btn.innerText;
       btn.innerText = '画像作成中...';
@@ -1472,6 +1502,13 @@
       });
     }
     initDraftRestore();
+
+    // ================= 全てリセット =================
+    document.getElementById('btn-reset-all').addEventListener('click', () => {
+      if (!confirm('入力中の内容をすべて消去して、初期状態に戻します。よろしいですか？（この操作は取り消せません）')) return;
+      try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+      location.reload();
+    });
 
     // ================= よく使う用語クイック挿入パレット =================
     const TERM_STORAGE_KEY = 'bs_card_maker_terms_v1';
