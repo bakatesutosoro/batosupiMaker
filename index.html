@@ -41,7 +41,16 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
       box-sizing: border-box;
     }
-    .editor h2 { margin-top: 0; font-size: 18px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+    .editor h2 { margin-top: 0; font-size: 18px; }
+    .editor-title-row {
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 0;
+    }
+    .btn-help {
+      background: #1e3a3a; color: #4fc3f7; border: 1px solid #2e5555; border-radius: 5px;
+      font-size: 12px; padding: 6px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-help:hover { background: #26484a; }
     
     .editor-section {
       font-size: 13px; font-weight: bold; color: #00e676; margin: 15px 0 6px 0;
@@ -328,6 +337,17 @@
     }
     .modal-close { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; }
     .modal-note { font-size: 11px; color: #999; padding: 8px 14px 0; }
+    .modal-box-wide { max-width: 620px; }
+    .help-body { padding: 14px 16px 18px; overflow-y: auto; color: #ddd; font-size: 13px; line-height: 1.7; }
+    .help-section { margin-bottom: 18px; }
+    .help-section:last-child { margin-bottom: 0; }
+    .help-section h3 {
+      font-size: 13px; color: #00e676; margin: 0 0 8px; border-left: 3px solid #00e676; padding-left: 6px;
+    }
+    .help-section p { margin: 0; }
+    .help-section ol, .help-section ul { margin: 0; padding-left: 20px; }
+    .help-section li { margin-bottom: 4px; }
+    .help-section strong { color: #fff; }
     #gallery-list { padding: 10px 14px; overflow-y: auto; }
     .gallery-item {
       display: flex; justify-content: space-between; align-items: center; gap: 8px;
@@ -413,7 +433,10 @@
 
   <!-- 入力フォーム（スマホ表示時は下） -->
   <div class="editor">
-    <h2>カード情報入力</h2>
+    <div class="editor-title-row">
+      <h2>カード情報入力</h2>
+      <button type="button" id="btn-help-open" class="btn-help">📖 使い方</button>
+    </div>
     <div class="editor-note">※カードをタップ/ページにファイルドロップで画像・設定読込<br>※使わない項目はチェックを外して非表示</div>
 
     <!-- 下書き自動保存の復元バナー -->
@@ -747,6 +770,52 @@
       </div>
       <div class="modal-note">※画像はデータ容量の都合で保存されません。テキスト設定のみ復元されます。</div>
       <div id="gallery-list"></div>
+    </div>
+  </div>
+
+  <!-- 使い方モーダル -->
+  <div id="help-modal" class="modal-overlay">
+    <div class="modal-box modal-box-wide">
+      <div class="modal-header">
+        <span>📖 使い方</span>
+        <button id="btn-help-close" class="modal-close">✖</button>
+      </div>
+      <div class="help-body">
+        <section class="help-section">
+          <h3>基本の流れ</h3>
+          <ol>
+            <li>右側（スマホは上）のカードプレビューをタップするか、画像をドラッグ＆ドロップして背景イラストを設定</li>
+            <li>左側の入力フォームでカード名・コスト・効果テキストなどを入力すると、リアルタイムでプレビューに反映されます</li>
+            <li>使わない能力（フラッシュ・バーストなど）はチェックを外しておくと、その項目は表示されません</li>
+            <li>「カードを画像保存 (PNG)」で完成したカードをPNG画像として保存できます</li>
+          </ol>
+        </section>
+
+        <section class="help-section">
+          <h3>色・シンボルの設定</h3>
+          <p>属性カラーは通常1色を選ぶだけでOKです。複数の色を組み合わせたグラデーションカードや、軽減・シンボルを色ごとに個別指定したい場合は、一番上の「複色カードにする」にチェックを入れると詳細設定が出てきます。</p>
+        </section>
+
+        <section class="help-section">
+          <h3>よく使う用語／自動で太字にする用語</h3>
+          <p>「よく使う用語」は、クリックすると最後に選択していたテキスト欄にその場で挿入されます。「自動で太字にする用語」に登録した単語は、効果テキストのどこに書いても自動的に太字表示になります。どちらも「＋追加」から自由に登録・削除でき、内容はブラウザに保存されて次回も残ります。</p>
+        </section>
+
+        <section class="help-section">
+          <h3>設定の保存・管理</h3>
+          <ul>
+            <li><strong>設定をエクスポート／インポート (JSON)</strong>：カード1枚分の設定をファイルとして書き出し・読み込みできます。他の人に設定を渡したいときにも使えます</li>
+            <li><strong>マイギャラリー</strong>：作ったカードをブラウザ内に保存しておける機能です（最大12枚、画像は容量の都合で保存されません）</li>
+            <li><strong>下書きの自動保存</strong>：入力するたびに自動保存されるので、誤ってタブを閉じても次回開いたときに復元できます</li>
+            <li><strong>全てリセット</strong>：入力内容を初期状態に戻します。マイギャラリーや用語リストは消えません</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>うまく表示されないとき</h3>
+          <p>効果テキストが長すぎて枠からはみ出すと赤い警告が出ます。文字数を減らすか、使っていない項目のチェックを外してください。保存した画像の見た目がプレビューとズレる場合は、一度スマホの画面を回転させたりページを再読み込みしてから試してみてください。</p>
+        </section>
+      </div>
     </div>
   </div>
 
@@ -1505,7 +1574,7 @@
 
     // ================= 全てリセット =================
     document.getElementById('btn-reset-all').addEventListener('click', () => {
-      if (!confirm('入力中の内容をすべて消去して、初期状態に戻します。よろしいですか？（この操作は取り消せません）')) return;
+      if (!confirm('入力中の内容をすべて消去して、初期状態に戻します。よろしいですか？（この操作は取り消せません）\n\n※マイギャラリーに保存したカードや、登録した用語リストは削除されません。')) return;
       try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
       location.reload();
     });
@@ -1743,6 +1812,17 @@
     });
     document.getElementById('gallery-modal').addEventListener('click', (e) => {
       if (e.target.id === 'gallery-modal') document.getElementById('gallery-modal').classList.remove('show');
+    });
+
+    // ================= 使い方モーダル =================
+    document.getElementById('btn-help-open').addEventListener('click', () => {
+      document.getElementById('help-modal').classList.add('show');
+    });
+    document.getElementById('btn-help-close').addEventListener('click', () => {
+      document.getElementById('help-modal').classList.remove('show');
+    });
+    document.getElementById('help-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'help-modal') document.getElementById('help-modal').classList.remove('show');
     });
 
     updateCard();
