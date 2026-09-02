@@ -709,7 +709,10 @@
     <!-- 10. 転醒設定 -->
     <div class="editor-section"><label><input type="checkbox" id="chk-tense"> 転醒設定</label></div>
     <div id="sec-tense" class="section-body" style="display:none;">
-      <div class="form-group"><label>転醒条件・テキスト</label><textarea id="in-tense-text" rows="2"></textarea></div>
+      <div class="form-group">
+        <input type="text" id="in-tense-cond" placeholder="転醒条件 (例: 自分のライフが3以下のとき)">
+        <textarea id="in-tense-text" rows="2" placeholder="転醒効果テキスト"></textarea>
+      </div>
     </div>
 
     <!-- 11. 創界神設定 -->
@@ -1225,11 +1228,12 @@
       }
 
       if (document.getElementById('chk-tense').checked) {
-        const text = document.getElementById('in-tense-text').value;
-        if (text) {
+        const tCond = document.getElementById('in-tense-cond').value;
+        const tText = document.getElementById('in-tense-text').value;
+        if (tCond || tText) {
           const div = document.createElement('div');
           div.className = 'effect-section';
-          div.innerHTML = `<div><span class="tag-tense">【転醒】</span> ${formatEffectText(text)}</div>`;
+          div.innerHTML = `<div><span class="tag-tense">【転醒：${tCond}】</span></div><div>${formatEffectText(tText)}</div>`;
           effectBox.appendChild(div);
         }
       }
