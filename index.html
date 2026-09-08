@@ -11,8 +11,6 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2216%22 fill=%22%23c62828%22/><circle cx=%2250%22 cy=%2250%22 r=%2230%22 fill=%22%23ffd700%22/></svg>">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#c62828">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
@@ -342,6 +340,13 @@
     .modal-note { font-size: 11px; color: #999; padding: 8px 14px 0; }
     .modal-box-wide { max-width: 620px; }
     .help-body { padding: 14px 16px 18px; overflow-y: auto; color: #ddd; font-size: 13px; line-height: 1.7; }
+    .help-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .help-tab-btn {
+      flex: 1; background: #333; color: #aaa; border: 1px solid #555; border-radius: 6px;
+      padding: 9px; font-size: 13px; font-weight: bold; cursor: pointer;
+    }
+    .help-tab-btn.active { background: #00e676; color: #111; border-color: #00e676; }
+    .help-tab-btn:hover:not(.active) { background: #444; }
     .help-section { margin-bottom: 18px; }
     .help-section:last-child { margin-bottom: 0; }
     .help-section h3 {
@@ -357,21 +362,30 @@
     @media (min-width: 850px) {
       .pc-only-feature { display: block; }
     }
+    .mobile-only-feature { display: block; }
+    @media (min-width: 850px) {
+      .mobile-only-feature { display: none; }
+    }
 
-    /* コレクション一覧（サムネイル表示） */
+    /* 画面下に張り付くクイックアクションバー（PC=デッキ、スマホ=ギャラリー） */
+    .sticky-action-bar {
+      position: fixed; bottom: 0; left: 0; width: 100%; z-index: 700;
+      background: #1a1a1a; border-top: 1px solid #444; padding: 10px 14px;
+      display: flex; justify-content: center; gap: 10px; box-shadow: 0 -4px 14px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+    }
+    .sticky-action-bar button {
+      border: none; border-radius: 6px; font-size: 13px; font-weight: bold; padding: 10px 18px;
+      cursor: pointer; color: #fff; max-width: 480px; flex: 1;
+    }
+    .sticky-action-bar .sticky-deck-btn { background: #4527a0; }
+    .sticky-action-bar .sticky-deck-btn:hover { background: #5635b5; }
+    .sticky-action-bar .sticky-gallery-btn { background: #455a64; }
+    .sticky-action-bar .sticky-gallery-btn:hover { background: #56707d; }
+    body { padding-bottom: 64px; }
+
+    /* カードサムネイル表示（コレクション・デッキ管理で共用） */
     .modal-box-collection { max-width: 900px; }
-    .collection-toolbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 10px 16px 0; flex-wrap: wrap;
-    }
-    .collection-toolbar-left { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #ccc; }
-    .collection-toolbar-left label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
-    .collection-export-btn {
-      background: #00695c; color: #fff; border: none; border-radius: 5px;
-      font-size: 12px; padding: 7px 12px; cursor: pointer; font-weight: bold;
-    }
-    .collection-export-btn:hover { background: #00897b; }
-    .collection-export-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
     .collection-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px;
       padding: 14px 16px 18px; overflow-y: auto;
@@ -389,12 +403,6 @@
       font-size: 11px; color: #ddd; margin-top: 6px; text-align: center;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;
     }
-    .collection-checkbox {
-      position: absolute; top: 10px; left: 10px; z-index: 2;
-      background: rgba(0,0,0,0.6); border-radius: 4px; padding: 2px;
-      display: flex; width: 20px; height: 20px; align-items: center; justify-content: center;
-    }
-    .collection-checkbox input { width: 15px; height: 15px; cursor: pointer; accent-color: #00e676; }
     .collection-loading { color: #aaa; font-size: 13px; padding: 30px; text-align: center; grid-column: 1 / -1; }
 
     /* デッキ管理 */
@@ -440,6 +448,9 @@
     }
     .deck-load-btn { background: #1976d2; color: #fff; }
     .deck-load-btn:hover { background: #2286e8; }
+    .deck-compare-btn { background: #6a1b9a; color: #fff; }
+    .deck-compare-btn:hover { background: #7b26b0; }
+    .deck-load-btn:hover { background: #2286e8; }
     .deck-remove-btn { background: #3a1414; color: #ff8a80; border: 1px solid #d32f2f !important; }
     .deck-remove-btn:hover { background: #4a1a1a; }
 
@@ -471,6 +482,8 @@
     /* 画像コピーボタン */
     .btn-copy-image { background: #00838f; }
     .btn-copy-image:hover { background: #00a3b3; }
+    .btn-save-bgimage { background: #5d4037; }
+    .btn-save-bgimage:hover { background: #6d4c41; }
     .btn-bulk-import-label { background: #37474f; }
     .btn-bulk-import-label:hover { background: #455a64; }
 
@@ -496,6 +509,21 @@
       font-size: 13px; padding: 9px 14px; cursor: pointer;
     }
     .card-context-menu button:hover { background: #383838; }
+
+    /* デッキクイック追加ポップアップ */
+    .deck-picker-popup {
+      display: none; position: absolute; z-index: 10001; background: #262626; border: 1px solid #555;
+      border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,0.6); overflow: hidden; min-width: 200px; max-width: 260px;
+      max-height: 260px; overflow-y: auto;
+    }
+    .deck-picker-popup.show { display: block; }
+    .deck-picker-popup button {
+      display: block; width: 100%; text-align: left; background: none; border: none; color: #fff;
+      font-size: 13px; padding: 9px 14px; cursor: pointer; border-bottom: 1px solid #3a3a3a;
+    }
+    .deck-picker-popup button:last-child { border-bottom: none; }
+    .deck-picker-popup button:hover { background: #383838; }
+    .deck-picker-empty { color: #999; font-size: 12px; padding: 14px; text-align: center; line-height: 1.6; }
     #gallery-list { padding: 10px 14px; overflow-y: auto; }
     .gallery-item {
       display: flex; justify-content: space-between; align-items: center; gap: 8px;
@@ -714,6 +742,12 @@
       <div class="form-group flex-col" style="flex:2;"><label>系統</label><input type="text" id="in-system" value="起幻"></div>
     </div>
 
+    <!-- このカードの特殊な位置づけ（他の全ての効果より優先し、常に効果ボックスの一番上に表示される） -->
+    <div class="form-group">
+      <label>このカードの特殊な位置づけ（例：このカードは○○として扱う）</label>
+      <textarea id="in-deemed-text" rows="2" placeholder="例：このカードは創界神カードとして扱う"></textarea>
+    </div>
+
     <!-- 2. 通常テキスト / Lv効果（2.5倍に拡大：rows=8） -->
     <div class="editor-section">通常テキスト / Lv効果</div>
     <div class="form-group">
@@ -897,6 +931,7 @@
     <!-- ボタン類 -->
     <button id="btn-download" class="action-btn">カードを画像保存 (PNG)</button>
     <button id="btn-copy-image" class="action-btn btn-copy-image">📋 画像をコピー</button>
+    <button id="btn-save-bgimage" class="action-btn btn-save-bgimage">🖼 元画像を保存</button>
     <button id="btn-export" class="action-btn btn-export">設定をエクスポート (JSON)</button>
     <label class="action-btn btn-import-label">
       設定をインポート (JSON)
@@ -904,18 +939,19 @@
     </label>
     <button id="btn-reset-all" class="action-btn btn-reset-all">全てリセット</button>
 
-    <!-- マイギャラリー -->
-    <div class="editor-section">マイギャラリー（ブラウザに保存）</div>
-    <div class="flex-row" style="margin-bottom:8px;">
-      <button id="btn-gallery-save" class="action-btn" style="margin:0; flex:1; background:#455a64;">現在のカードをギャラリーに保存</button>
-      <button id="btn-gallery-open" class="action-btn" style="margin:0; flex:1; background:#455a64;">ギャラリーを開く</button>
+    <!-- マイギャラリー（スマホ向け。PC版はデッキ管理があるため非表示） -->
+    <div class="mobile-only-feature">
+      <div class="editor-section">マイギャラリー（ブラウザに保存）</div>
+      <div class="flex-row" style="margin-bottom:8px;">
+        <button id="btn-gallery-save" class="action-btn" style="margin:0; flex:1; background:#455a64;">現在のカードをギャラリーに保存</button>
+        <button id="btn-gallery-open" class="action-btn" style="margin:0; flex:1; background:#455a64;">ギャラリーを開く</button>
+      </div>
+      <label class="action-btn btn-bulk-import-label">
+        📥 複数のJSONをギャラリーに一括追加
+        <input type="file" id="btn-bulk-import" accept=".json" multiple style="display:none;">
+      </label>
     </div>
-    <label class="action-btn btn-bulk-import-label">
-      📥 複数のJSONをギャラリーに一括追加
-      <input type="file" id="btn-bulk-import" accept=".json" multiple style="display:none;">
-    </label>
     <button id="btn-compare-open" class="action-btn" style="background:#6a1b9a;">⚖ カードを見比べる</button>
-    <button id="btn-collection-open" class="action-btn pc-only-feature" style="background:#00695c;">🖼️ コレクション一覧を見る（サムネイル表示・一括PNG保存）</button>
     <button id="btn-deck-open" class="action-btn pc-only-feature" style="background:#4527a0;">📁 デッキ管理を開く（PCフォルダに保存・画像も保存可）</button>
   </div>
   </div>
@@ -940,11 +976,16 @@
         <button id="btn-help-close" class="modal-close">✖</button>
       </div>
       <div class="help-body">
+        <div class="help-tabs">
+          <button type="button" id="help-tab-pc" class="help-tab-btn">💻 PC版</button>
+          <button type="button" id="help-tab-mobile" class="help-tab-btn">📱 スマホ版</button>
+        </div>
+
         <section class="help-section">
           <h3>基本の流れ</h3>
           <ol>
-            <li>右側（スマホは上）のカードプレビューをタップするか、画像をドラッグ＆ドロップして背景イラストを設定</li>
-            <li>左側の入力フォームでカード名・コスト・効果テキストなどを入力すると、リアルタイムでプレビューに反映されます</li>
+            <li>カードプレビューをタップ（クリック）するか、画像をドラッグ＆ドロップして背景イラストを設定</li>
+            <li>入力フォームでカード名・コスト・効果テキストなどを入力すると、リアルタイムでプレビューに反映されます</li>
             <li>使わない能力（フラッシュ・バーストなど）はチェックを外しておくと、その項目は表示されません</li>
             <li>「カードを画像保存 (PNG)」で完成したカードをPNG画像として保存できます</li>
           </ol>
@@ -956,57 +997,84 @@
         </section>
 
         <section class="help-section">
+          <h3>このカードの特殊な位置づけ欄</h3>
+          <p>「通常テキスト / Lv効果」欄のすぐ上にある欄です。見た目や入力方法は他の効果テキストと同じですが、実際のカードでは必ず効果ボックスの一番上（バーストなど他の全ての効果より前）に表示されます。「このカードは○○として扱う」のような、他の効果より先に伝えておきたい一文を書くのに使えます。</p>
+        </section>
+
+        <section class="help-section">
           <h3>よく使う用語／自動で太字にする用語</h3>
           <p>「よく使う用語」は、クリックすると最後に選択していたテキスト欄にその場で挿入されます。「自動で太字にする用語」に登録した単語は、効果テキストのどこに書いても自動的に太字表示になります。どちらも「＋追加」から自由に登録・削除でき、内容はブラウザに保存されて次回も残ります。</p>
         </section>
 
         <section class="help-section">
-          <h3>設定の保存・管理</h3>
+          <h3>画像・設定ファイルまわり</h3>
           <ul>
+            <li><strong>カードを画像保存 (PNG)</strong>：完成したカードをそのまま画像として保存します</li>
+            <li><strong>画像をコピー</strong>：ファイル保存せず、そのままクリップボードにコピーできます（対応ブラウザのみ）。SNSやチャットへの貼り付けに便利です</li>
+            <li><strong>元画像を保存</strong>：カード枠を付けず、設定した背景画像そのものをダウンロードします</li>
             <li><strong>設定をエクスポート／インポート (JSON)</strong>：カード1枚分の設定をファイルとして書き出し・読み込みできます。他の人に設定を渡したいときにも使えます</li>
-            <li><strong>マイギャラリー</strong>：作ったカードをブラウザ内に保存しておける機能です（最大12枚、画像は容量の都合で保存されません）</li>
-            <li><strong>複数のJSONをギャラリーに一括追加</strong>：JSONファイルを複数選んで、まとめてギャラリーに追加できます</li>
-            <li><strong>コレクション一覧</strong>（PC限定）：ギャラリーに保存したカードをサムネイル一覧で見られます。複数選択して「まとめてPNG保存」を押すと、ZIPファイルで一括ダウンロードできます</li>
-            <li><strong>デッキ管理</strong>（PC限定・Chrome/Edge対応）：PC上のフォルダを選んで、デッキ単位でカードを画像込みで保存できます。ブラウザの保存容量制限を受けないので、枚数やデータサイズを気にせず使えます。デッキを開くと収録カードが一覧表示され、カードをクリックすると詳細（読み込み・削除）が見られます。カードはドラッグ&ドロップで並べ替え可能、「統計を見る」でコストカーブや属性カラーの内訳も確認できます。「ZIPで書き出し」でデッキ全体を画像付きバックアップとして保存し、一覧画面の「ZIPから復元」で元に戻せます</li>
-            <li><strong>カードを見比べる</strong>：ギャラリーから2枚選んで並べて表示できます</li>
             <li><strong>下書きの自動保存</strong>：入力するたびに自動保存されるので、誤ってタブを閉じても次回開いたときに復元できます</li>
-            <li><strong>全てリセット</strong>：入力内容を初期状態に戻します。マイギャラリーや用語リストは消えません</li>
+            <li><strong>全てリセット</strong>：入力内容を初期状態に戻します。保存済みのカードや用語リストは消えません</li>
           </ul>
         </section>
 
-        <section class="help-section">
-          <h3>その他の機能</h3>
-          <ul>
-            <li><strong>画像をコピー</strong>：ファイル保存せず、そのままクリップボードにコピーできます（対応ブラウザのみ）。SNSやチャットへの貼り付けに便利です</li>
-            <li><strong>キーボードショートカット</strong>（PC）：<code>Ctrl+S</code>で画像保存、<code>Ctrl+E</code>で設定エクスポートができます</li>
-            <li><strong>右クリックメニュー</strong>（PC）：カードプレビュー上を右クリックすると「画像コピー」「画像保存」「ギャラリーに保存」を選べます</li>
-          </ul>
-        </section>
+        <!-- PC版限定の説明 -->
+        <div id="help-content-pc">
+          <section class="help-section">
+            <h3>デッキ管理（PC限定・Chrome/Edge対応）</h3>
+            <p>PC上のフォルダを選んで、デッキ単位でカードを画像込みで保存できます。ブラウザの保存容量制限を受けないので、枚数やデータサイズを気にせず使えます。</p>
+            <ul>
+              <li>「デッキ管理を開く」から、フォルダを選んでデッキを作成・管理します</li>
+              <li>デッキを開くと収録カードが画像付きサムネイルで一覧表示され、クリックすると詳細（読み込み・見比べる・削除）が見られます</li>
+              <li>カードはドラッグ＆ドロップで並べ替え可能です</li>
+              <li>「統計を見る」でコストカーブや属性カラーの内訳を確認できます</li>
+              <li>「ZIPで書き出し」でデッキ全体を画像付きバックアップとして保存し、デッキ一覧の「ZIPから復元」で元に戻せます</li>
+              <li>同じ名前のデッキ・カードを保存しようとすると、上書きするか確認されます</li>
+            </ul>
+          </section>
+
+          <section class="help-section">
+            <h3>デッキへのクイック追加</h3>
+            <p>デッキ管理をわざわざ開かなくても、画面下に常に表示されている「📁 デッキに追加」ボタン、またはカードプレビューを<strong>右クリック</strong>して出るメニューの「デッキに追加」から、今のカードを直接デッキに追加できます。</p>
+          </section>
+
+          <section class="help-section">
+            <h3>右クリックメニュー・キーボードショートカット</h3>
+            <ul>
+              <li>カードプレビュー上で<strong>右クリック</strong>すると「画像コピー」「画像保存」「元画像を保存」「デッキに追加」を選べます</li>
+              <li><code>Ctrl+S</code> で画像保存、<code>Ctrl+E</code> で設定エクスポートができます</li>
+            </ul>
+          </section>
+
+          <section class="help-section">
+            <h3>カードを見比べる</h3>
+            <p>現在デッキ管理で開いているデッキのカードから2枚選んで、並べて表示できます。デッキのカード詳細画面にある「⚖ 見比べる」からも開始できます。</p>
+          </section>
+        </div>
+
+        <!-- スマホ版限定の説明 -->
+        <div id="help-content-mobile">
+          <section class="help-section">
+            <h3>マイギャラリー（スマホ向け）</h3>
+            <p>作ったカードをブラウザ内に保存しておける機能です（最大12枚、画像は容量の都合で保存されません）。</p>
+            <ul>
+              <li>画面下に常に表示されている「➕ ギャラリーに保存」、またはギャラリー内の「現在のカードをギャラリーに保存」から保存できます</li>
+              <li>同じ名前のカードが既にある場合は、上書きするか確認されます</li>
+              <li>「複数のJSONをギャラリーに一括追加」で、JSONファイルを複数選んでまとめて追加することもできます</li>
+            </ul>
+          </section>
+
+          <section class="help-section">
+            <h3>カードを見比べる</h3>
+            <p>ギャラリーに保存したカードから2枚選んで、並べて表示できます。</p>
+          </section>
+        </div>
 
         <section class="help-section">
           <h3>うまく表示されないとき</h3>
           <p>効果テキストが長すぎて枠からはみ出すと赤い警告が出ます。文字数を減らすか、使っていない項目のチェックを外してください。保存した画像の見た目がプレビューとズレる場合は、一度スマホの画面を回転させたりページを再読み込みしてから試してみてください。</p>
         </section>
       </div>
-    </div>
-  </div>
-
-  <!-- コレクション一覧モーダル（サムネイル表示・一括PNG保存） -->
-  <div id="collection-modal" class="modal-overlay">
-    <div class="modal-box modal-box-collection">
-      <div class="modal-header">
-        <span>🖼️ コレクション一覧</span>
-        <button id="btn-collection-close" class="modal-close">✖</button>
-      </div>
-      <div class="modal-note">※ギャラリーに保存したカードのサムネイルを表示します。背景画像は保存されていないため、実際の画像とは見た目が異なります。</div>
-      <div class="collection-toolbar">
-        <div class="collection-toolbar-left">
-          <label><input type="checkbox" id="collection-select-all">全て選択</label>
-          <span id="collection-select-count">0枚選択中</span>
-        </div>
-        <button id="collection-export-zip" class="collection-export-btn" disabled>選択したカードをPNGでまとめて保存 (ZIP)</button>
-      </div>
-      <div class="collection-grid" id="collection-grid"></div>
     </div>
   </div>
 
@@ -1054,6 +1122,15 @@
     <p><strong>権利者・第三者の方へ：</strong>本ツールの内容について問題がございましたら、下記までご連絡ください。確認の上、速やかに対応いたします。</p>
     <p class="footer-contact">連絡先：<a href="https://twitter.com/sorobakiumu" target="_blank" rel="noopener noreferrer" id="footer-contact-email">@sorobakiumu（Twitter/X）</a></p>
   </footer>
+
+  <!-- 画面下に張り付くクイックアクションバー -->
+  <div class="sticky-action-bar">
+    <button id="sticky-deck-btn" class="sticky-deck-btn pc-only-feature">📁 デッキに追加</button>
+    <button id="sticky-gallery-btn" class="sticky-gallery-btn mobile-only-feature">➕ ギャラリーに保存</button>
+  </div>
+
+  <!-- デッキクイック追加ポップアップ -->
+  <div id="deck-picker-popup" class="deck-picker-popup"></div>
 
   <script>
     const COLOR_THEMES = {
@@ -1413,6 +1490,16 @@
 
       const effectBox = document.getElementById('out-effect');
       effectBox.innerHTML = '';
+
+      // このカードの特殊な位置づけ設定は他の全ての効果より優先し、必ず一番上に表示する
+      // （通常テキストと全く同じ扱い：チェックボックスや特別なタグは無く、入力があればそのまま表示）
+      const deemedText = document.getElementById('in-deemed-text').value;
+      if (deemedText) {
+        const div = document.createElement('div');
+        div.className = 'effect-section';
+        div.innerHTML = formatEffectText(deemedText);
+        effectBox.appendChild(div);
+      }
 
       if (document.getElementById('chk-burst').checked) {
         const cond = document.getElementById('in-burst-cond').value;
@@ -1785,6 +1872,29 @@
       btn.disabled = false;
     });
 
+    // ================= 元画像（背景にアップロードした画像そのもの）を保存 =================
+    document.getElementById('btn-save-bgimage').addEventListener('click', () => {
+      const bgCss = document.getElementById('card-bg').style.backgroundImage;
+      if (!bgCss || bgCss === 'none') {
+        alert('保存できる元画像がありません。先にカードに背景画像を設定してください。');
+        return;
+      }
+      const match = bgCss.match(/^url\(['"]?(.*?)['"]?\)$/);
+      const dataUrl = match ? match[1] : '';
+      if (!dataUrl.startsWith('data:image/')) {
+        alert('元画像の取得に失敗しました。');
+        return;
+      }
+      const mimeMatch = dataUrl.match(/^data:image\/([a-zA-Z0-9.+-]+);/);
+      const ext = mimeMatch ? mimeMatch[1].replace('jpeg', 'jpg') : 'png';
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `${getFileName()}_元画像.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+
     // ================= キーボードショートカット（PC向け） =================
     document.addEventListener('keydown', (e) => {
       const ctrlOrCmd = e.ctrlKey || e.metaKey;
@@ -1805,15 +1915,22 @@
       menu.innerHTML = `
         <button data-action="copy">📋 画像をコピー</button>
         <button data-action="save">💾 画像を保存</button>
+        <button data-action="bgsave">🖼 元画像を保存</button>
         <button data-action="gallery">➕ ギャラリーに保存</button>
+        <button data-action="deck">📁 デッキに追加</button>
       `;
       document.body.appendChild(menu);
 
       document.getElementById('card-preview').addEventListener('contextmenu', (e) => {
         e.preventDefault();
+        const isPC = window.matchMedia('(min-width: 850px)').matches;
+        menu.querySelector('[data-action="gallery"]').style.display = isPC ? 'none' : 'block';
+        menu.querySelector('[data-action="deck"]').style.display = isPC ? 'block' : 'none';
         menu.style.left = e.pageX + 'px';
         menu.style.top = e.pageY + 'px';
         menu.classList.add('show');
+        menu.dataset.x = e.pageX;
+        menu.dataset.y = e.pageY;
       });
       document.addEventListener('click', () => menu.classList.remove('show'));
       menu.addEventListener('click', (e) => {
@@ -1821,7 +1938,9 @@
         if (!action) return;
         if (action === 'copy') document.getElementById('btn-copy-image').click();
         if (action === 'save') document.getElementById('btn-download').click();
+        if (action === 'bgsave') document.getElementById('btn-save-bgimage').click();
         if (action === 'gallery') document.getElementById('btn-gallery-save').click();
+        if (action === 'deck') quickAddCardToDeckFlow(parseInt(menu.dataset.x) || 20, parseInt(menu.dataset.y) || 20);
         menu.classList.remove('show');
       });
     })();
@@ -2099,12 +2218,29 @@
     }
     document.getElementById('btn-gallery-save').addEventListener('click', () => {
       const items = loadGallery();
+      const name = document.getElementById('in-name').value.trim() || '無題のカード';
+
+      const existingIdx = items.findIndex(item => (item.name || '無題のカード') === name);
+      if (existingIdx !== -1) {
+        if (!confirm(`「${name}」という名前のカードが既にギャラリーにあります。上書きしますか？`)) return;
+        items[existingIdx] = {
+          name,
+          savedAt: new Date().toLocaleString('ja-JP'),
+          settings: collectFormSettings()
+        };
+        if (saveGallery(items)) {
+          renderGalleryList();
+          alert('ギャラリーに上書き保存しました。');
+        }
+        return;
+      }
+
       if (items.length >= GALLERY_MAX) {
         alert(`ギャラリーに保存できるのは最大${GALLERY_MAX}枚までです。不要なカードを削除してから保存してください。`);
         return;
       }
       items.push({
-        name: document.getElementById('in-name').value.trim() || '無題のカード',
+        name,
         savedAt: new Date().toLocaleString('ja-JP'),
         settings: collectFormSettings()
       });
@@ -2160,24 +2296,38 @@
     });
 
     // ================= カードを見比べる（PC・スマホ両対応） =================
+    // ギャラリーのカードに加え、現在デッキ管理で開いているデッキのカードも比較対象に含める
+    let compareOptionsPool = [];
+    function buildCompareOptionsPool() {
+      const pool = [];
+      loadGallery().forEach(item => {
+        pool.push({ label: item.name || '無題のカード', settings: item.settings, bgImage: '' });
+      });
+      if (currentDeckData) {
+        currentDeckData.cards.forEach(card => {
+          pool.push({ label: `[${currentDeckData.name}] ${card.name || '無題のカード'}`, settings: card.settings, bgImage: card.bgImage || '', cardRef: card });
+        });
+      }
+      return pool;
+    }
     function populateCompareSelects() {
-      const items = loadGallery();
+      compareOptionsPool = buildCompareOptionsPool();
       ['a', 'b'].forEach(letter => {
         const sel = document.getElementById(`compare-select-${letter}`);
         sel.innerHTML = `<option value="">-- ${letter === 'a' ? '1' : '2'}枚目を選択 --</option>`;
-        items.forEach((item, idx) => {
-          const opt = document.createElement('option');
-          opt.value = idx;
-          opt.innerText = item.name || '無題のカード';
-          sel.appendChild(opt);
+        compareOptionsPool.forEach((opt, idx) => {
+          const o = document.createElement('option');
+          o.value = idx;
+          o.innerText = opt.label;
+          sel.appendChild(o);
         });
       });
     }
 
-    async function renderCompareSlot(letter, gallerySettings) {
+    async function renderCompareSlot(letter, poolEntry) {
       const loadingEl = document.getElementById(`compare-loading-${letter}`);
       const imgEl = document.getElementById(`compare-img-${letter}`);
-      if (!gallerySettings) {
+      if (!poolEntry) {
         loadingEl.style.display = 'block';
         loadingEl.innerText = 'カードを選んでください';
         imgEl.style.display = 'none';
@@ -2192,8 +2342,8 @@
       imgEl.style.display = 'none';
 
       const originalState = captureFullEditorState();
-      applyDraft(gallerySettings);
-      document.getElementById('card-bg').style.backgroundImage = '';
+      applyDraft(poolEntry.settings);
+      document.getElementById('card-bg').style.backgroundImage = poolEntry.bgImage ? `url(${poolEntry.bgImage})` : '';
       updateCard();
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       try {
@@ -2207,14 +2357,24 @@
       restoreFullEditorState(originalState);
     }
 
-    document.getElementById('btn-compare-open').addEventListener('click', () => {
+    function openCompareModal(presetEntry) {
       populateCompareSelects();
-      document.getElementById('compare-select-a').value = '';
-      document.getElementById('compare-select-b').value = '';
-      renderCompareSlot('a', null);
-      renderCompareSlot('b', null);
+      if (presetEntry) {
+        const idx = compareOptionsPool.findIndex(o => o.cardRef === presetEntry.cardRef);
+        document.getElementById('compare-select-a').value = idx >= 0 ? idx : '';
+        document.getElementById('compare-select-b').value = '';
+        renderCompareSlot('a', idx >= 0 ? compareOptionsPool[idx] : null);
+        renderCompareSlot('b', null);
+      } else {
+        document.getElementById('compare-select-a').value = '';
+        document.getElementById('compare-select-b').value = '';
+        renderCompareSlot('a', null);
+        renderCompareSlot('b', null);
+      }
       document.getElementById('compare-modal').classList.add('show');
-    });
+    }
+
+    document.getElementById('btn-compare-open').addEventListener('click', () => openCompareModal(null));
     document.getElementById('btn-compare-close').addEventListener('click', () => {
       document.getElementById('compare-modal').classList.remove('show');
     });
@@ -2222,14 +2382,12 @@
       if (e.target.id === 'compare-modal') document.getElementById('compare-modal').classList.remove('show');
     });
     document.getElementById('compare-select-a').addEventListener('change', async (e) => {
-      const items = loadGallery();
       const idx = e.target.value;
-      await renderCompareSlot('a', idx !== '' ? items[idx].settings : null);
+      await renderCompareSlot('a', idx !== '' ? compareOptionsPool[idx] : null);
     });
     document.getElementById('compare-select-b').addEventListener('change', async (e) => {
-      const items = loadGallery();
       const idx = e.target.value;
-      await renderCompareSlot('b', idx !== '' ? items[idx].settings : null);
+      await renderCompareSlot('b', idx !== '' ? compareOptionsPool[idx] : null);
     });
 
     document.getElementById('btn-gallery-open').addEventListener('click', () => {
@@ -2243,10 +2401,7 @@
       if (e.target.id === 'gallery-modal') document.getElementById('gallery-modal').classList.remove('show');
     });
 
-    // ================= コレクション一覧（サムネイル表示・一括PNG保存） =================
-    // ※PC表示専用機能。背景画像はギャラリーに保存されていないため、サムネイルはテキスト・色情報のみの再現になる。
-    let collectionThumbCache = [];
-
+    // ================= カードのサムネイル画像を生成する共通処理（デッキ管理で使用） =================
     async function captureCardThumbnail(scale) {
       // スマホ表示時のtransform縮小がかかったまま撮影されるとズレるため、撮影直前だけ無効化する
       const wrapper = document.querySelector('.card-wrapper');
@@ -2262,150 +2417,6 @@
         wrapper.style.marginBottom = prevMarginBottom;
       }
     }
-
-    function renderCollectionGrid() {
-      const grid = document.getElementById('collection-grid');
-      grid.innerHTML = '';
-      if (collectionThumbCache.length === 0) {
-        grid.innerHTML = '<div class="collection-loading">まだ保存されたカードはありません</div>';
-        return;
-      }
-      collectionThumbCache.forEach((entry, idx) => {
-        const tile = document.createElement('div');
-        tile.className = 'collection-tile';
-        tile.innerHTML = `
-          <label class="collection-checkbox"><input type="checkbox" class="collection-select" data-idx="${idx}"></label>
-          <img src="${entry.dataUrl}" alt="${(entry.name || '').replace(/"/g, '&quot;')}">
-          <div class="collection-tile-name">${(entry.name || '無題のカード').replace(/</g, '&lt;')}</div>
-        `;
-        tile.querySelector('img').addEventListener('click', () => {
-          applyDraft(entry.settings);
-          updateCard();
-          document.getElementById('collection-modal').classList.remove('show');
-        });
-        tile.querySelector('.collection-select').addEventListener('change', updateCollectionSelectionCount);
-        grid.appendChild(tile);
-      });
-    }
-
-    function updateCollectionSelectionCount() {
-      const checked = document.querySelectorAll('.collection-select:checked');
-      document.getElementById('collection-select-count').innerText = `${checked.length}枚選択中`;
-      document.getElementById('collection-export-zip').disabled = checked.length === 0;
-    }
-
-    async function openCollectionModal() {
-      const modal = document.getElementById('collection-modal');
-      const grid = document.getElementById('collection-grid');
-      document.getElementById('collection-select-all').checked = false;
-      document.getElementById('collection-export-zip').disabled = true;
-      document.getElementById('collection-select-count').innerText = '0枚選択中';
-      modal.classList.add('show');
-
-      if (typeof html2canvas === 'undefined') {
-        grid.innerHTML = '<div class="collection-loading">サムネイル生成機能の読み込みに失敗しました。ページを再読み込みしてから、もう一度お試しください。</div>';
-        return;
-      }
-
-      const items = loadGallery();
-      if (items.length === 0) {
-        collectionThumbCache = [];
-        grid.innerHTML = '<div class="collection-loading">まだ保存されたカードはありません</div>';
-        return;
-      }
-
-      grid.innerHTML = '<div class="collection-loading">サムネイルを生成中...</div>';
-
-      // 編集中の内容を退避し、生成が終わったら元に戻す
-      const originalSettings = collectFormSettings();
-      const results = [];
-      for (const item of items) {
-        applyDraft(item.settings);
-        updateCard();
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-        let dataUrl = '';
-        try {
-          const canvas = await captureCardThumbnail(0.5);
-          dataUrl = canvas.toDataURL('image/png');
-        } catch (e) {}
-        results.push({ name: item.name, settings: item.settings, dataUrl });
-      }
-      applyDraft(originalSettings);
-      updateCard();
-
-      collectionThumbCache = results;
-      renderCollectionGrid();
-    }
-
-    document.getElementById('btn-collection-open').addEventListener('click', openCollectionModal);
-    document.getElementById('btn-collection-close').addEventListener('click', () => {
-      document.getElementById('collection-modal').classList.remove('show');
-    });
-    document.getElementById('collection-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'collection-modal') document.getElementById('collection-modal').classList.remove('show');
-    });
-    document.getElementById('collection-select-all').addEventListener('change', (e) => {
-      document.querySelectorAll('.collection-select').forEach(cb => { cb.checked = e.target.checked; });
-      updateCollectionSelectionCount();
-    });
-
-    document.getElementById('collection-export-zip').addEventListener('click', async () => {
-      if (typeof JSZip === 'undefined') {
-        alert('ZIP書き出し機能の読み込みに失敗しました。通信環境をご確認の上、ページを再読み込みしてください。');
-        return;
-      }
-      const selectedIdxs = Array.from(document.querySelectorAll('.collection-select:checked')).map(cb => parseInt(cb.dataset.idx));
-      if (selectedIdxs.length === 0) return;
-
-      const btn = document.getElementById('collection-export-zip');
-      const originalLabel = btn.innerText;
-      btn.disabled = true;
-
-      const originalSettings = collectFormSettings();
-      const zip = new JSZip();
-      const usedNames = {};
-
-      for (let i = 0; i < selectedIdxs.length; i++) {
-        btn.innerText = `書き出し中...(${i + 1}/${selectedIdxs.length})`;
-        const entry = collectionThumbCache[selectedIdxs[i]];
-        applyDraft(entry.settings);
-        updateCard();
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-        try {
-          const canvas = await captureCardThumbnail(2);
-          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-          const baseName = (entry.name || '無題のカード').replace(/[\\/:*?"<>|]/g, '_');
-          let fileName = baseName + '.png';
-          let n = 2;
-          while (usedNames[fileName]) {
-            fileName = `${baseName}_${n}.png`;
-            n++;
-          }
-          usedNames[fileName] = true;
-          if (blob) zip.file(fileName, blob);
-        } catch (e) {}
-      }
-
-      applyDraft(originalSettings);
-      updateCard();
-
-      try {
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(zipBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'カードコレクション.zip';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        alert('ZIPファイルの生成に失敗しました。');
-      }
-
-      btn.disabled = false;
-      btn.innerText = originalLabel;
-    });
 
     // ================= デッキ管理（PCのフォルダに保存） =================
     // File System Access API (Chrome/Edge等のPC版のみ対応) を使い、選んだフォルダの中に
@@ -2579,7 +2590,9 @@
         const fileName = safeFileName(name) + '.deck.json';
         try {
           const existing = await deckDirHandle.getFileHandle(fileName, { create: false }).catch(() => null);
-          if (existing) { alert('同じ名前のデッキが既にあります。'); return; }
+          if (existing) {
+            if (!confirm(`同じ名前のデッキ「${name}」が既にあります。上書き（中身を空の状態にして作り直し）しますか？`)) return;
+          }
           const fileHandle = await deckDirHandle.getFileHandle(fileName, { create: true });
           await writeDeckFile(fileHandle, { name, cards: [] });
           renderDeckListView();
@@ -2759,6 +2772,7 @@
           <div class="deck-card-detail-name">${(card.name || '無題のカード').replace(/</g, '&lt;')}</div>
           <div class="deck-card-detail-btns">
             <button class="deck-load-btn">エディターに読み込む</button>
+            <button class="deck-compare-btn">⚖ 見比べる</button>
             <button class="deck-remove-btn">このデッキから削除</button>
           </div>
         </div>
@@ -2767,6 +2781,10 @@
       body.querySelector('.deck-load-btn').addEventListener('click', () => {
         restoreFullEditorState({ settings: card.settings, bgImage: card.bgImage });
         document.getElementById('deck-modal').classList.remove('show');
+      });
+      body.querySelector('.deck-compare-btn').addEventListener('click', () => {
+        document.getElementById('deck-modal').classList.remove('show');
+        openCompareModal({ cardRef: card });
       });
       body.querySelector('.deck-remove-btn').addEventListener('click', async () => {
         if (!confirm('このカードをデッキから削除しますか？')) return;
@@ -2781,23 +2799,8 @@
     }
 
     async function addCurrentCardToDeck() {
-      const state = captureFullEditorState();
-      const card = {
-        id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-        name: document.getElementById('in-name').value.trim() || '無題のカード',
-        settings: state.settings,
-        bgImage: state.bgImage,
-        addedAt: new Date().toLocaleString('ja-JP')
-      };
-      currentDeckData.cards.push(card);
-      try {
-        await writeDeckFile(currentDeckHandle, currentDeckData);
-        await renderDeckDetailView();
-        alert('このデッキにカードを追加しました。');
-      } catch (e) {
-        alert('保存に失敗しました。');
-        currentDeckData.cards.pop();
-      }
+      await addCurrentCardToSpecificDeck(currentDeckHandle, currentDeckData);
+      await renderDeckDetailView();
     }
 
     // デッキ全体をバックアップ用ZIPで書き出す（deck.json + 各カードのPNG画像を同梱）
@@ -2945,9 +2948,118 @@
       if (e.target.id === 'deck-modal') document.getElementById('deck-modal').classList.remove('show');
     });
 
+    // ================= デッキへのクイック追加（右クリックメニュー／画面下のクイックバーから使用） =================
+    async function addCurrentCardToSpecificDeck(fileHandle, preloadedData) {
+      const data = preloadedData || await readDeckFile(fileHandle);
+      if (!data) { alert('デッキファイルの読み込みに失敗しました。'); return; }
+      const state = captureFullEditorState();
+      const name = document.getElementById('in-name').value.trim() || '無題のカード';
+
+      const existingIdx = data.cards.findIndex(c => (c.name || '無題のカード') === name);
+      if (existingIdx !== -1) {
+        if (!confirm(`「${name}」という名前のカードが、デッキ「${data.name}」に既にあります。上書きしますか？`)) return;
+        const existingId = data.cards[existingIdx].id;
+        data.cards[existingIdx] = {
+          id: existingId,
+          name,
+          settings: state.settings,
+          bgImage: state.bgImage,
+          addedAt: new Date().toLocaleString('ja-JP')
+        };
+        delete deckThumbCache[existingId];
+      } else {
+        data.cards.push({
+          id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+          name,
+          settings: state.settings,
+          bgImage: state.bgImage,
+          addedAt: new Date().toLocaleString('ja-JP')
+        });
+      }
+      try {
+        await writeDeckFile(fileHandle, data);
+        // 現在このデッキを開いて見ている最中であれば、表示にも反映する
+        if (currentDeckHandle === fileHandle) {
+          currentDeckData = data;
+        }
+        alert(`デッキ「${data.name}」にカードを${existingIdx !== -1 ? '上書き保存' : '追加'}しました。`);
+      } catch (e) {
+        alert('保存に失敗しました。');
+      }
+    }
+
+    async function showDeckPickerPopup(x, y) {
+      const popup = document.getElementById('deck-picker-popup');
+      const posX = Math.min(x, window.innerWidth - 240);
+      const posY = Math.min(y, window.innerHeight - 220);
+      popup.style.left = Math.max(8, posX) + 'px';
+      popup.style.top = Math.max(8, posY) + 'px';
+      popup.innerHTML = '<div class="deck-picker-empty">読み込み中...</div>';
+      popup.classList.add('show');
+
+      const decks = await listDeckFiles();
+      if (decks.length === 0) {
+        popup.innerHTML = '<div class="deck-picker-empty">デッキがまだありません。<br>「デッキ管理」から作成してください。</div>';
+        return;
+      }
+      popup.innerHTML = '';
+      for (const deck of decks) {
+        const data = await readDeckFile(deck.handle);
+        const btn = document.createElement('button');
+        btn.innerText = (data && data.name) || deck.fileName;
+        btn.addEventListener('click', async () => {
+          popup.classList.remove('show');
+          await addCurrentCardToSpecificDeck(deck.handle, data);
+        });
+        popup.appendChild(btn);
+      }
+    }
+    document.addEventListener('click', (e) => {
+      const popup = document.getElementById('deck-picker-popup');
+      if (!popup.contains(e.target)) popup.classList.remove('show');
+    });
+
+    async function quickAddCardToDeckFlow(x, y) {
+      if (!isFileSystemAccessSupported()) {
+        alert('お使いのブラウザは、この機能に必要な「ファイルシステムアクセス」に対応していません。Google ChromeまたはMicrosoft Edge（PC版）でお試しください。');
+        return;
+      }
+      if (!deckDirHandle) {
+        const savedHandle = await loadDirHandleFromIDB();
+        if (savedHandle && (await ensureDeckPermission(savedHandle).catch(() => false))) {
+          deckDirHandle = savedHandle;
+        }
+      }
+      if (!deckDirHandle) {
+        if (!confirm('まだデッキ保存フォルダが選択されていません。今すぐ選びますか？')) return;
+        await pickDeckFolder();
+        document.getElementById('deck-modal').classList.remove('show');
+        if (!deckDirHandle) return;
+      }
+      await showDeckPickerPopup(x, y);
+    }
+
+    document.getElementById('sticky-deck-btn').addEventListener('click', (e) => {
+      const rect = e.target.getBoundingClientRect();
+      quickAddCardToDeckFlow(rect.left, rect.top - 8);
+    });
+    document.getElementById('sticky-gallery-btn').addEventListener('click', () => {
+      document.getElementById('btn-gallery-save').click();
+    });
+
     // ================= 使い方モーダル =================
+    function setHelpTab(tab) {
+      document.getElementById('help-content-pc').style.display = tab === 'pc' ? 'block' : 'none';
+      document.getElementById('help-content-mobile').style.display = tab === 'mobile' ? 'block' : 'none';
+      document.getElementById('help-tab-pc').classList.toggle('active', tab === 'pc');
+      document.getElementById('help-tab-mobile').classList.toggle('active', tab === 'mobile');
+    }
+    document.getElementById('help-tab-pc').addEventListener('click', () => setHelpTab('pc'));
+    document.getElementById('help-tab-mobile').addEventListener('click', () => setHelpTab('mobile'));
     document.getElementById('btn-help-open').addEventListener('click', () => {
       document.getElementById('help-modal').classList.add('show');
+      // 開いたときの画面幅に合わせて、最初に見せるタブを自動で選ぶ
+      setHelpTab(window.matchMedia('(min-width: 850px)').matches ? 'pc' : 'mobile');
     });
     document.getElementById('btn-help-close').addEventListener('click', () => {
       document.getElementById('help-modal').classList.remove('show');
@@ -2957,15 +3069,6 @@
     });
 
     updateCard();
-
-    // ================= PWA: Service Worker登録 =================
-    // manifest.json / sw.js が同じ場所に無い環境（file://で直接開いた場合など）でも
-    // エラーで機能が止まらないよう、失敗は無視して通常のWebページとして動作させる
-    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
-    }
   </script>
 </body>
 </html>
