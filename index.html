@@ -444,6 +444,16 @@
       font-size: 11px; padding: 5px 9px; cursor: pointer; flex-shrink: 0;
     }
     .deck-card-detail { text-align: center; }
+    .deck-card-nav {
+      display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px;
+    }
+    .deck-nav-btn {
+      background: #37474f; color: #fff; border: none; border-radius: 5px;
+      font-size: 12px; padding: 7px 12px; cursor: pointer; font-weight: bold;
+    }
+    .deck-nav-btn:hover:not(:disabled) { background: #455a64; }
+    .deck-nav-btn:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; }
+    .deck-card-nav-count { font-size: 12px; color: #999; }
     .deck-card-detail img {
       max-width: 320px; width: 100%; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.6); margin-bottom: 14px;
     }
@@ -670,8 +680,12 @@
     <div class="form-group">
       <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#ccc; font-size:12px;">
         <input type="checkbox" id="chk-img-white-bg" style="width:16px; height:16px; accent-color:#00e676;">
-        カード名から下に白背景を敷く（正方形・横長画像の余白対策）
+        カード名から下に背景色を敷く（正方形・横長画像の余白対策）
       </label>
+      <div class="flex-row" style="align-items:center; margin-top:6px;">
+        <input type="color" id="in-img-bg-color" value="#ffffff" style="width:44px; height:32px; padding:2px; flex:none; border:1px solid #555; border-radius:4px; background:#333; cursor:pointer;">
+        <button type="button" id="btn-eyedropper-bg" class="action-btn" style="margin:0; flex:1; background:#455a64;">🎨 カードから色を取得</button>
+      </div>
     </div>
 
     <!-- 1. 基本設定 -->
@@ -1006,7 +1020,7 @@
 
         <section class="help-section">
           <h3>背景画像 位置・サイズ調整</h3>
-          <p>拡大率・横位置・縦位置のスライダーで画像の見せ方を調整できます。画像の横幅を基準に拡大するため、正方形や横長の画像だとカード名より下に上下の余白ができることがあります。「カード名から下に白背景を敷く」にチェックを入れると、その余白が白くなり、はみ出さずに収まった見た目にできます。</p>
+          <p>拡大率・横位置・縦位置のスライダーで画像の見せ方を調整できます。画像の横幅を基準に拡大するため、正方形や横長の画像だとカード名より下に上下の余白ができることがあります。「カード名から下に背景色を敷く」にチェックを入れると、その余白を好きな色で埋められます。色は右の色見本から選べるほか、「🎨 カードから色を取得」でスポイトのように画面上の色をそのまま取得できます（対応ブラウザのみ）。</p>
         </section>
 
         <section class="help-section">
@@ -1053,7 +1067,7 @@
 
           <section class="help-section">
             <h3>デッキへのクイック追加</h3>
-            <p>デッキ管理をわざわざ開かなくても、画面下に常に表示されている「📁 デッキに追加」ボタン、またはカードプレビューを<strong>右クリック</strong>して出るメニューの「デッキに追加」から、今のカードを直接デッキに追加できます。</p>
+            <p>デッキ管理を開いていない状態でも、カードプレビューを<strong>右クリック</strong>して出るメニューの「デッキに追加」から、今のカードを直接デッキに追加できます（あらかじめ一度「デッキ管理を開く」からフォルダに接続しておく必要があります）。画面下に常に表示されている「📁 デッキ管理を開く」ボタンからは、いつでもデッキ管理を開けます。</p>
           </section>
 
           <section class="help-section">
@@ -1143,7 +1157,7 @@
 
   <!-- 画面下に張り付くクイックアクションバー -->
   <div class="sticky-action-bar">
-    <button id="sticky-deck-btn" class="sticky-deck-btn pc-only-feature">📁 デッキに追加</button>
+    <button id="sticky-deck-btn" class="sticky-deck-btn pc-only-feature">📁 デッキ管理を開く</button>
     <button id="sticky-gallery-btn" class="sticky-gallery-btn mobile-only-feature">➕ ギャラリーに保存</button>
   </div>
 
@@ -1376,8 +1390,9 @@
       document.getElementById('img-x-val').innerText = imgX;
       document.getElementById('img-y-val').innerText = imgY;
 
-      document.getElementById('card-white-backing').style.display =
-        document.getElementById('chk-img-white-bg').checked ? 'block' : 'none';
+      const whiteBacking = document.getElementById('card-white-backing');
+      whiteBacking.style.display = document.getElementById('chk-img-white-bg').checked ? 'block' : 'none';
+      whiteBacking.style.background = document.getElementById('in-img-bg-color').value;
 
       // <b>タグの文字色を制御する設定
       if (isRainbow) {
@@ -1914,6 +1929,23 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    });
+
+    // ================= 背景色のスポイト機能（対応ブラウザのみ） =================
+    document.getElementById('btn-eyedropper-bg').addEventListener('click', async () => {
+      if (typeof window.EyeDropper === 'undefined') {
+        alert('お使いのブラウザはスポイト機能に対応していません。Google ChromeまたはMicrosoft Edgeでお試しいただくか、色見本から直接色を選んでください。');
+        return;
+      }
+      try {
+        const eyeDropper = new EyeDropper();
+        const result = await eyeDropper.open();
+        document.getElementById('in-img-bg-color').value = result.sRGBHex;
+        document.getElementById('chk-img-white-bg').checked = true;
+        updateCard();
+      } catch (e) {
+        // ユーザーがEscでキャンセルした場合などは何もしない
+      }
     });
 
     // ================= キーボードショートカット（PC向け） =================
@@ -2494,6 +2526,19 @@
       return { settings, bgImage };
     }
     function restoreFullEditorState(state) {
+      // settingsに含まれていない項目（古いカードデータに無い新規追加項目など）が
+      // 直前の状態のまま残ってしまう(表示の意図しない引き継ぎ)のを防ぐため、
+      // 先に全項目を空の状態にリセットしてからsettingsを反映する
+      document.querySelectorAll('.editor input, .editor textarea, .editor select').forEach(elem => {
+        if (!elem.id || elem.type === 'file') return;
+        if (state.settings[elem.id] === undefined) {
+          if (elem.type === 'checkbox') {
+            elem.checked = false;
+          } else {
+            elem.value = '';
+          }
+        }
+      });
       applyDraft(state.settings);
       document.getElementById('card-bg').style.backgroundImage = state.bgImage ? `url(${state.bgImage})` : '';
       updateCard();
@@ -2784,11 +2829,21 @@
     function renderCardDetailView(card) {
       document.getElementById('deck-modal-title').innerText = `📁 ${currentDeckData.name}`;
       const body = document.getElementById('deck-modal-body');
+      const cards = currentDeckData.cards;
+      const idx = cards.findIndex(c => c.id === card.id);
+      const prevCard = idx > 0 ? cards[idx - 1] : null;
+      const nextCard = idx !== -1 && idx < cards.length - 1 ? cards[idx + 1] : null;
+
       body.innerHTML = `
         <div class="deck-toolbar">
           <button class="deck-back-btn">← ${currentDeckData.name} に戻る</button>
         </div>
         <div class="deck-card-detail">
+          <div class="deck-card-nav">
+            <button class="deck-nav-btn deck-nav-prev" ${prevCard ? '' : 'disabled'}>‹ 前へ</button>
+            <span class="deck-card-nav-count">${idx !== -1 ? idx + 1 : '?'} / ${cards.length}</span>
+            <button class="deck-nav-btn deck-nav-next" ${nextCard ? '' : 'disabled'}>次へ ›</button>
+          </div>
           <img src="${deckThumbCache[card.id] || ''}" alt="">
           <div class="deck-card-detail-name">${(card.name || '無題のカード').replace(/</g, '&lt;')}</div>
           <div class="deck-card-detail-btns">
@@ -2799,6 +2854,8 @@
         </div>
       `;
       body.querySelector('.deck-back-btn').addEventListener('click', renderDeckDetailView);
+      if (prevCard) body.querySelector('.deck-nav-prev').addEventListener('click', () => renderCardDetailView(prevCard));
+      if (nextCard) body.querySelector('.deck-nav-next').addEventListener('click', () => renderCardDetailView(nextCard));
       body.querySelector('.deck-load-btn').addEventListener('click', () => {
         restoreFullEditorState({ settings: card.settings, bgImage: card.bgImage });
         document.getElementById('deck-modal').classList.remove('show');
@@ -3052,17 +3109,17 @@
         }
       }
       if (!deckDirHandle) {
-        if (!confirm('まだデッキ保存フォルダが選択されていません。今すぐ選びますか？')) return;
-        await pickDeckFolder();
-        document.getElementById('deck-modal').classList.remove('show');
-        if (!deckDirHandle) return;
+        // ここで showDirectoryPicker を呼ぶと、直前にawaitを挟んでいる影響で
+        // ブラウザの「ユーザー操作」判定が切れてピッカーが無言で失敗することがあるため、
+        // 先に「デッキ管理を開く」からフォルダ接続を済ませてもらう案内にする
+        alert('デッキ保存フォルダにまだ接続されていません。「デッキ管理を開く」から先にフォルダへ接続してください。');
+        return;
       }
       await showDeckPickerPopup(x, y);
     }
 
-    document.getElementById('sticky-deck-btn').addEventListener('click', (e) => {
-      const rect = e.target.getBoundingClientRect();
-      quickAddCardToDeckFlow(rect.left, rect.top - 8);
+    document.getElementById('sticky-deck-btn').addEventListener('click', () => {
+      openDeckModal();
     });
     document.getElementById('sticky-gallery-btn').addEventListener('click', () => {
       document.getElementById('btn-gallery-save').click();
